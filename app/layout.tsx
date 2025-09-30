@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <FilterBookmarksProvider>
+        {/* <FilterBookmarksProvider>
           <div className="container mt-5">
             <div className="row mb-4">
               <div className="col">
@@ -37,8 +37,8 @@ export default function RootLayout({
             </div>
             {children}
           </div>
-        </FilterBookmarksProvider>
-        {/* <BulkTemplatesData /> */}
+        </FilterBookmarksProvider> */}
+        <BulkTemplatesData />
       </body>
     </html>
   );
