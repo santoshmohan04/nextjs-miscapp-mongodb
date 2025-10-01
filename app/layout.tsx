@@ -6,6 +6,7 @@ import SearchInput from '@/components/SearchInput';
 import ModalsComponent from '@/components/modalscomp';
 import { Provider } from 'react-redux';
 import BulkTemplatesData from '@/components/bulktemplates';
+import MongoItems from '@/components/mongoitems';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -38,7 +39,8 @@ export default function RootLayout({
             {children}
           </div>
         </FilterBookmarksProvider> */}
-        <BulkTemplatesData />
+        {/* <BulkTemplatesData /> */}
+        <MongoItems />
       </body>
     </html>
   );
