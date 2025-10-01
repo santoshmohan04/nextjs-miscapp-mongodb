@@ -1,6 +1,11 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model, Schema } from 'mongoose';
 
-const ItemSchema = new mongoose.Schema({
+interface IItem extends Document {
+  name: string;
+  description?: string;
+}
+
+const ItemSchema: Schema<IItem> = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -8,4 +13,6 @@ const ItemSchema = new mongoose.Schema({
   description: String,
 });
 
-export default mongoose.models.Item || mongoose.model('Item', ItemSchema);
+const Item: Model<IItem> = mongoose.models.Item as Model<IItem> || mongoose.model<IItem>('Item', ItemSchema);
+
+export default Item;

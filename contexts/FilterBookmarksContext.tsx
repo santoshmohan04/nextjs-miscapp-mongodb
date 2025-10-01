@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from "react";
 
 interface addBookMarkPayload {
   title: string;
@@ -20,11 +20,11 @@ interface FilterBookmarksContextProps {
 
 const FilterBookmarksContext = createContext<FilterBookmarksContextProps>({
   filter: () => {},
-  searchTerm: '',
+  searchTerm: "",
   addBookmark: () => {},
-  bookmarkPayload: { title: '', url: '', icon: '', foldertitle: '' },
+  bookmarkPayload: { title: "", url: "", icon: "", foldertitle: "" },
   addCategory: () => {},
-  title: '',
+  title: "",
 });
 
 export const useFilterBookmarks = () => useContext(FilterBookmarksContext);
@@ -36,14 +36,14 @@ interface FilterBookmarksProviderProps {
 export const FilterBookmarksProvider: React.FC<
   FilterBookmarksProviderProps
 > = ({ children }) => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [bookmarkPayload, setAddBookmark] = useState<addBookMarkPayload>({
-    title: '',
-    url: '',
-    icon: '',
-    folderTitle: '',
+    title: "",
+    url: "",
+    icon: "",
+    foldertitle: "",
   });
-  const [title, setAddCategory] = useState<string>('');
+  const [title, setAddCategory] = useState<string>("");
 
   const filter = (term: string) => {
     setSearchTerm(term);
