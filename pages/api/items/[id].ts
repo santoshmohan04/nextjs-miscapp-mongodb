@@ -1,16 +1,16 @@
-import dbConnect from '../../../lib/mongodb';
-import Item from '../../../models/Item';
+import { connectDB } from "../../../lib/mongodb";
+import Item from "../../../models/Item";
 
-export default async function handler(req:any, res:any) {
+export default async function handler(req: any, res: any) {
   const {
     query: { id },
     method,
   } = req;
 
-  await dbConnect();
+  await connectDB();
 
   switch (method) {
-    case 'PUT':
+    case "PUT":
       try {
         const item = await Item.findByIdAndUpdate(id, req.body, {
           new: true,
@@ -25,7 +25,7 @@ export default async function handler(req:any, res:any) {
       }
       break;
 
-    case 'DELETE':
+    case "DELETE":
       try {
         const deletedItem = await Item.deleteOne({ _id: id });
         if (!deletedItem) {
