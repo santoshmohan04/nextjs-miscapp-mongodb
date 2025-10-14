@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import React, { useState } from "react";
 
 type PaginationDataProps = {
   data: any[]; // Replace 'any' with a specific type if known

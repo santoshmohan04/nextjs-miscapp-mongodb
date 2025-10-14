@@ -1,4 +1,5 @@
 import Dropdown from "react-bootstrap/Dropdown";
+import React from "react";
 
 export default function RecipeDetail() {
   return (

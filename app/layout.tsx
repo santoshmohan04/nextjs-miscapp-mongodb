@@ -1,13 +1,5 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { FilterBookmarksProvider } from "../contexts/FilterBookmarksContext";
-import SearchInput from "@/components/SearchInput";
-import ModalsComponent from "@/components/modalscomp";
-import { Provider } from "react-redux";
-import BulkTemplatesData from "@/components/bulktemplates";
-import MongoItems from "@/components/mongoitems";
-import RecipeList from "@/components/recipelist";
 import Header from "@/components/header";
 
 export const metadata: Metadata = {
@@ -23,26 +15,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {/* <FilterBookmarksProvider>
-          <div className="container mt-5">
-            <div className="row mb-4">
-              <div className="col">
-                <h1>Bookmarks Manager</h1>
-              </div>
-              <div className="col-auto">
-                <ModalsComponent />
-              </div>
-            </div>
-            <div className="row mb-4">
-              <div className="col">
-                <SearchInput />
-              </div>
-            </div>
-            {children}
-          </div>
-        </FilterBookmarksProvider> */}
-        {/* <BulkTemplatesData /> */}
-        {/* <MongoItems /> */}
         <Header />
         <div className="container mt-5">{children}</div>
       </body>

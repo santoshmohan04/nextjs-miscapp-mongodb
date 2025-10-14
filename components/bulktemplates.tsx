@@ -1,26 +1,31 @@
-'use client';
+"use client";
 
-import { MessageType, bulkhistory, INotificationRecipientHistory } from './templatesdata';
-import Table from 'react-bootstrap/Table';
-import Modal from 'react-bootstrap/Modal';
-import Button from 'react-bootstrap/Button';
-import { useState } from 'react';
-import DOMPurify from 'dompurify';
+import {
+  MessageType,
+  bulkhistory,
+  INotificationRecipientHistory,
+} from "./templatesdata";
+import Table from "react-bootstrap/Table";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+import React, { useState } from "react";
+import DOMPurify from "dompurify";
 
 export default function BulkTemplatesData() {
   const [show, setShow] = useState(false);
-  const [displaytemplate, setDisplayTemplate] = useState<INotificationRecipientHistory>({
-    recipientId: '',
-    recipientAddress: '',
-    recipientParameters: '',
-    messageType: '',
-    subject: '',
-    message: '',
-    status: '',
-    updatedDate: 0,
-    acctnbr: '',
-    bounced: false
-  });
+  const [displaytemplate, setDisplayTemplate] =
+    useState<INotificationRecipientHistory>({
+      recipientId: "",
+      recipientAddress: "",
+      recipientParameters: "",
+      messageType: "",
+      subject: "",
+      message: "",
+      status: "",
+      updatedDate: 0,
+      acctnbr: "",
+      bounced: false,
+    });
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
@@ -36,7 +41,9 @@ export default function BulkTemplatesData() {
     const msoStart = newMessage.indexOf("<!--[if mso]>");
     const msoEnd = newMessage.indexOf("<![endif]-->");
     if (msoStart !== -1 && msoEnd !== -1) {
-      newMessage = newMessage.slice(0, msoStart) + newMessage.slice(msoEnd + "<![endif]-->".length);
+      newMessage =
+        newMessage.slice(0, msoStart) +
+        newMessage.slice(msoEnd + "<![endif]-->".length);
     }
 
     // Remove closing body and html tags if present
@@ -68,33 +75,39 @@ export default function BulkTemplatesData() {
     }
 
     return newMessage;
-  }
+  };
 
   const messageContainsBodyAndHtmlTags = (message: string): boolean => {
     return message.includes("</body>") && message.includes("</html>");
-  }
+  };
 
   const formatPhoneNumber = (phone: string): string => {
     return `(${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
-  }
+  };
 
   const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, "0");
     const year = date.getFullYear();
     return `${month}/${day}/${year}`;
   };
 
   const viewTemplate = (template: INotificationRecipientHistory) => {
-    const formattedData = formatBody(template.message, template.recipientParameters);
+    const formattedData = formatBody(
+      template.message,
+      template.recipientParameters
+    );
     setDisplayTemplate({ ...template, message: formattedData });
     setShow(true);
-  }
+  };
 
   const printTemplate = (template: INotificationRecipientHistory) => {
-    const formattedData = formatBody(template.message, template.recipientParameters);
-    setDisplayTemplate({ ...template, message: formattedData })
+    const formattedData = formatBody(
+      template.message,
+      template.recipientParameters
+    );
+    setDisplayTemplate({ ...template, message: formattedData });
     const printWindow = window.open("", "_blank", "width=900,height=600");
     if (printWindow) {
       printWindow.document.write(`
@@ -115,12 +128,11 @@ export default function BulkTemplatesData() {
       printWindow.focus();
       printWindow.print();
     }
-  }
+  };
 
   const getSanitisedData = (text: string) => {
     return DOMPurify.sanitize(text);
-  }
-
+  };
 
   return (
     <div className="container mt-3">
@@ -136,27 +148,37 @@ export default function BulkTemplatesData() {
           </tr>
         </thead>
         <tbody>
-          {bulkhistory.bulkNotificationHistories.map((t: INotificationRecipientHistory, index: number) => (
-            <tr key={index}>
-              <td>{formatDate(t.updatedDate)}</td>
-              <td>{t.status === 'S' ? 'Sent' : t.status === 'N' ? 'New' : ''}</td>
-              <td>{t.subject}</td>
-              <td>{t?.messageType === MessageType.T
-                ? formatPhoneNumber(t?.recipientAddress ?? "")
-                : t?.messageType === MessageType.H
-                  ? (t?.recipientAddress ?? "")
-                  : t?.messageType === MessageType.P
+          {bulkhistory.bulkNotificationHistories.map(
+            (t: INotificationRecipientHistory, index: number) => (
+              <tr key={index}>
+                <td>{formatDate(t.updatedDate)}</td>
+                <td>
+                  {t.status === "S" ? "Sent" : t.status === "N" ? "New" : ""}
+                </td>
+                <td>{t.subject}</td>
+                <td>
+                  {t?.messageType === MessageType.T
+                    ? formatPhoneNumber(t?.recipientAddress ?? "")
+                    : t?.messageType === MessageType.H
+                    ? t?.recipientAddress ?? ""
+                    : t?.messageType === MessageType.P
                     ? "Mobile Push Notification"
                     : t?.messageType === MessageType.C
-                      ? formatPhoneNumber(t?.recipientAddress ?? "")
-                      : t?.messageType}</td>
-              <td>
-                <a className="action-link" onClick={() => viewTemplate(t)}>View</a>
-                <span>&nbsp;</span>
-                <a className="action-link" onClick={() => printTemplate(t)}>Print</a>
-              </td>
-            </tr>
-          ))}
+                    ? formatPhoneNumber(t?.recipientAddress ?? "")
+                    : t?.messageType}
+                </td>
+                <td>
+                  <a className="action-link" onClick={() => viewTemplate(t)}>
+                    View
+                  </a>
+                  <span>&nbsp;</span>
+                  <a className="action-link" onClick={() => printTemplate(t)}>
+                    Print
+                  </a>
+                </td>
+              </tr>
+            )
+          )}
         </tbody>
       </Table>
       <Modal
@@ -177,7 +199,11 @@ export default function BulkTemplatesData() {
             <span className="f6 fw4">Subject: </span>
             <span className="f4 fw4">{displaytemplate.subject}</span>
           </div>
-          <div dangerouslySetInnerHTML={{ __html: getSanitisedData(displaytemplate?.message) }}></div>
+          <div
+            dangerouslySetInnerHTML={{
+              __html: getSanitisedData(displaytemplate?.message),
+            }}
+          ></div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="primary" onClick={handleClose}>

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { bookmarksdata } from '@/components/data';
-import { useState, useEffect } from 'react';
-import PaginationData from './paginationdata';
-import { useFilterBookmarks } from '../contexts/FilterBookmarksContext';
+import { bookmarksdata } from "@/components/data";
+import React, { useState, useEffect } from "react";
+import PaginationData from "./paginationdata";
+import { useFilterBookmarks } from "../contexts/FilterBookmarksContext";
 
 export default function BookmarksList() {
-  const defaultIcon = 'https://via.placeholder.com/32?text=B';
+  const defaultIcon = "https://via.placeholder.com/32?text=B";
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(6);
   const [filteredData, setFilteredData] = useState<Array<any>>(
@@ -26,12 +26,12 @@ export default function BookmarksList() {
   }, [searchTerm]);
 
   useEffect(() => {
-    onaddBookmark(bookmarkPayload)
-  }, [bookmarkPayload])
+    onaddBookmark(bookmarkPayload);
+  }, [bookmarkPayload]);
 
   useEffect(() => {
-    onaddCategory(title)
-  }, [title])
+    onaddCategory(title);
+  }, [title]);
 
   const displayBookmarks = (data: any, page = 1) => {
     const start = (page - 1) * itemsPerPage;
@@ -39,7 +39,7 @@ export default function BookmarksList() {
     const paginatedData = data.slice(start, end);
 
     const categorized_data = paginatedData.reduce((acc: any, bookmark: any) => {
-      const folderTitle = bookmark.folderTitle || 'Uncategorized';
+      const folderTitle = bookmark.folderTitle || "Uncategorized";
       if (!acc[folderTitle]) {
         acc[folderTitle] = [];
       }
@@ -59,7 +59,7 @@ export default function BookmarksList() {
 
   const onImageError = (event: any) => {
     const target = event.target as HTMLImageElement;
-    target.src = 'https://via.placeholder.com/32?text=B';
+    target.src = "https://via.placeholder.com/32?text=B";
   };
 
   const deleteBookmark = (title: string) => {
@@ -91,32 +91,62 @@ export default function BookmarksList() {
     setCurrentPage(1);
   };
 
-  const onaddBookmark = (payload:any) => {
-    const folder = bookmarksdata.find(folder => folder.title === payload.foldertitle);
+  const onaddBookmark = (payload: any) => {
+    const folder = bookmarksdata.find(
+      (folder) => folder.title === payload.foldertitle
+    );
     if (folder) {
-      folder.children.push({ type: 'link', addDate: getDate(), title: payload.title, url:payload.url, icon:payload.icon });
+      folder.children.push({
+        type: "link",
+        addDate: getDate(),
+        title: payload.title,
+        url: payload.url,
+        icon: payload.icon,
+      });
     } else {
       bookmarksdata.push({
-        type: 'folder',
+        type: "folder",
         title: payload.foldertitle,
-        "addDate": getDate(),
-        "lastModified": getDate(),
-        children: [{ type: 'link', addDate: getDate(), title: payload.title, url:payload.url, icon:payload.icon }]
+        addDate: getDate(),
+        lastModified: getDate(),
+        children: [
+          {
+            type: "link",
+            addDate: getDate(),
+            title: payload.title,
+            url: payload.url,
+            icon: payload.icon,
+          },
+        ],
       });
     }
-    setFilteredData(bookmarksdata.flatMap(folder => folder.children.map(child => ({ ...child, folderTitle: folder.title }))));
+    setFilteredData(
+      bookmarksdata.flatMap((folder) =>
+        folder.children.map((child) => ({
+          ...child,
+          folderTitle: folder.title,
+        }))
+      )
+    );
     displayBookmarks(filteredData, currentPage);
   };
-  
-  const onaddCategory = (title:string) => {
+
+  const onaddCategory = (title: string) => {
     bookmarksdata.push({
-      type: 'folder',
+      type: "folder",
       title,
-      "addDate": getDate(),
-      "lastModified": getDate(),
-      children: []
+      addDate: getDate(),
+      lastModified: getDate(),
+      children: [],
     });
-    setFilteredData(bookmarksdata.flatMap(folder => folder.children.map(child => ({ ...child, folderTitle: folder.title }))));
+    setFilteredData(
+      bookmarksdata.flatMap((folder) =>
+        folder.children.map((child) => ({
+          ...child,
+          folderTitle: folder.title,
+        }))
+      )
+    );
     displayBookmarks(filteredData, currentPage);
   };
 
@@ -128,7 +158,7 @@ export default function BookmarksList() {
     const unixTimestamp = Math.floor(now.getTime() / 1000);
 
     return unixTimestamp;
-  }
+  };
 
   return (
     <>

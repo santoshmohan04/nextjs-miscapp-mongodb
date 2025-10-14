@@ -1,3 +1,4 @@
+import React from "react";
 import RecipeItems from "./recipeitem";
 
 export default function RecipeList() {
