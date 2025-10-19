@@ -101,6 +101,17 @@ export default function AddRecipe({ onClose, initial = null, onSaved }: Props) {
         alert("Recipe updated");
       }
       if (onSaved) onSaved(saved);
+      // notify other components that recipes changed so they can refresh
+      try {
+        // use a DOM CustomEvent so client components can listen globally
+        if (typeof window !== "undefined" && "CustomEvent" in window) {
+          window.dispatchEvent(
+            new CustomEvent("recipes:changed", { detail: { saved } })
+          );
+        }
+      } catch (e) {
+        // noop
+      }
       if (onClose) onClose();
     } catch (err: any) {
       console.error(err);

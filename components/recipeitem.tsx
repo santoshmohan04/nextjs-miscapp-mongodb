@@ -42,6 +42,39 @@ export default function RecipeItems() {
     };
   }, []);
 
+  // refresh list when a recipe is created/updated elsewhere
+  useEffect(() => {
+    const handler = (e: Event) => {
+      // re-run the fetch logic by setting loading then fetching
+      let mounted = true;
+      setLoading(true);
+      fetch("/api/recipes")
+        .then(async (res) => {
+          if (!res.ok) throw new Error(await res.text());
+          return res.json();
+        })
+        .then((data) => {
+          if (mounted) setRecipes(data);
+        })
+        .catch((err: any) => {
+          if (mounted) setError(err.message || String(err));
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
+        });
+      // no need to set mounted false here; this handler runs per event
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("recipes:changed", handler);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("recipes:changed", handler);
+      }
+    };
+  }, []);
+
   // handlers inside component so they can update local state
   async function handleDelete(id?: string | undefined) {
     if (!id) return;
