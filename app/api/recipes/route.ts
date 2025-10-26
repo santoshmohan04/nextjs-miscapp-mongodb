@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Recipe } from "@/models/Recipe";
 import { getUserFromToken } from "@/lib/auth";
+import mongoose from "mongoose";
 
 export async function POST(req: Request) {
   try {
@@ -30,18 +31,18 @@ export async function GET() {
   try {
     await connectDB();
 
-    // 🔒 Authenticate user
     const user = await getUserFromToken();
-    if (!user || typeof user === "string") {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Example: fetch only that user’s recipes (optional)
-    const userId = (user as any).id;
-    const recipes = await Recipe.find({ createdBy: userId });
+    // Convert string id directly to ObjectId
+    const userId = new mongoose.Types.ObjectId((user as { id: string }).id);
 
+    const recipes = await Recipe.find({ createdBy: userId });
     return NextResponse.json(recipes);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

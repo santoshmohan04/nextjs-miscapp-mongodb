@@ -3,11 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { signupSchema } from '@/utils/validationSchemas';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Alert from 'react-bootstrap/Alert';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser } from '@/store/auth/authactions';
+import { RootState, AppDispatch } from '@/store/store';
 
 type Props = {
   onSuccess?: () => void;
@@ -22,8 +25,9 @@ interface SignupFormData {
 
 export default function Signup({ onSuccess }: Props) {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [submitted, setSubmitted] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const {
     register,
@@ -34,32 +38,18 @@ export default function Signup({ onSuccess }: Props) {
     mode: 'onChange',
   });
 
-  const onSubmit = async (data: SignupFormData): Promise<void> => {
+  const onSubmit = (data: SignupFormData) => {
     setSubmitted(true);
-    setErrorMsg(null);
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setErrorMsg(json?.error || 'Signup failed');
-        return;
-      }
-      try {
-        localStorage.setItem('auth', '1');
-      } catch (e) {
-        // ignore
-      }
+    dispatch(registerUser(data.name, data.email, data.password));
+  };
+
+  // Redirect on successful signup
+  useEffect(() => {
+    if (isAuthenticated) {
       if (onSuccess) onSuccess();
       router.push('/');
-    } catch (err: any) {
-      setErrorMsg(err.message || String(err));
     }
-  };
+  }, [isAuthenticated, onSuccess, router]);
 
   return (
     <div style={{ maxWidth: '400px', margin: '50px auto' }}>
@@ -117,13 +107,11 @@ export default function Signup({ onSuccess }: Props) {
           </Form.Control.Feedback>
         </Form.Group>
 
-        {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
-        {submitted && !errorMsg && (
-          <Alert variant="success">Form submitted successfully!</Alert>
-        )}
+        {error && <Alert variant="danger">{error}</Alert>}
+        {submitted && !error && loading && <Alert variant="info">Submitting...</Alert>}
 
-        <Button variant="primary" type="submit" disabled={!isValid}>
-          Signup
+        <Button variant="primary" type="submit" disabled={!isValid || loading}>
+          {loading ? 'Signing up...' : 'Signup'}
         </Button>
       </Form>
     </div>

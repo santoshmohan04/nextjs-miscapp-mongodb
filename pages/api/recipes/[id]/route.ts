@@ -1,6 +1,5 @@
-// pages API wrapper for individual recipe operations
-import { connectDB } from "../../../../lib/mongodb";
-import { Recipe } from "../../../../models/Recipe";
+import { connectDB } from "@/lib/mongodb";
+import { Recipe } from "@/models/Recipe";
 
 export default async function handler(req: any, res: any) {
   const {

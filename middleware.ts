@@ -1,7 +1,6 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-// Use `jose` in middleware/edge runtime instead of `jsonwebtoken` (node-only)
 import { jwtVerify } from "jose";
 
 export async function middleware(req: NextRequest) {

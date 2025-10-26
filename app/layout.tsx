@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Header from "@/components/header";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { Providers } from '@/store/providers';
 
 export const metadata: Metadata = {
   title: "Misc Apps",
@@ -16,8 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-        <div className="container mt-5">{children}</div>
+       <Providers>
+          <Header />
+          <div className="container mt-5">{children}</div>
+        </Providers>
       </body>
     </html>
   );

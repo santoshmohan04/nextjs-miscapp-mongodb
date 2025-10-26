@@ -1,6 +1,5 @@
-// pages API wrapper for recipes — uses pages/api handler signature
-import { connectDB } from "../../../lib/mongodb";
-import { Recipe } from "../../../models/Recipe";
+import { connectDB } from "@/lib/mongodb";
+import { Recipe } from "@/models/Recipe";
 
 export default async function handler(req: any, res: any) {
   try {

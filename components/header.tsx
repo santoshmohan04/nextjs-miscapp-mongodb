@@ -1,38 +1,24 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Container from "react-bootstrap/Container";
+import Link from "next/link";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import { logoutUser } from "@/store/auth/authactions";
 
 export default function Header() {
-  const [authed, setAuthed] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    try {
-      const v = localStorage.getItem("auth");
-      setAuthed(!!v);
-    } catch (e) {
-      setAuthed(false);
-    }
-  }, []);
+  const dispatch = useDispatch<AppDispatch>();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
-    } catch (err) {
-      // ignore
-    }
-    try {
-      localStorage.removeItem("auth");
-    } catch (e) {
-      // ignore
-    }
-    setAuthed(false);
-    router.push("/");
+    dispatch(logoutUser());
+    router.push("/login");
   };
 
   return (
@@ -48,15 +34,13 @@ export default function Header() {
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
-            {authed && <Nav.Link href="/">Recipes</Nav.Link>}
+            {isAuthenticated && <Nav.Link as={Link} href="/recipes">Recipes</Nav.Link>}
           </Nav>
           <Nav>
-            {authed ? (
-              <>
-                <Nav.Link href="#" onClick={handleLogout}>
-                  Logout
-                </Nav.Link>
-              </>
+            {isAuthenticated ? (
+              <Nav.Link href="#" onClick={handleLogout}>
+                Logout
+              </Nav.Link>
             ) : (
               <>
                 <Nav.Link href="/login">Login</Nav.Link>
