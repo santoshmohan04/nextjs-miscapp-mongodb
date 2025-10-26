@@ -1,11 +1,40 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
-import NavDropdown from "react-bootstrap/NavDropdown";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
+  const [authed, setAuthed] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem("auth");
+      setAuthed(!!v);
+    } catch (e) {
+      setAuthed(false);
+    }
+  }, []);
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+    } catch (err) {
+      // ignore
+    }
+    try {
+      localStorage.removeItem("auth");
+    } catch (e) {
+      // ignore
+    }
+    setAuthed(false);
+    router.push("/");
+  };
+
   return (
     <Navbar
       collapseOnSelect
@@ -15,29 +44,25 @@ export default function Header() {
       data-bs-theme="dark"
     >
       <Container>
-        <Navbar.Brand href="#home">React-Bootstrap</Navbar.Brand>
+        <Navbar.Brand href="/">Misc Apps</Navbar.Brand>
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link href="#features">Features</Nav.Link>
-            <Nav.Link href="#pricing">Pricing</Nav.Link>
-            <NavDropdown title="Dropdown" id="collapsible-nav-dropdown">
-              <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.2">
-                Another action
-              </NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
-              <NavDropdown.Divider />
-              <NavDropdown.Item href="#action/3.4">
-                Separated link
-              </NavDropdown.Item>
-            </NavDropdown>
+            {authed && <Nav.Link href="/">Recipes</Nav.Link>}
           </Nav>
           <Nav>
-            <Nav.Link href="#deets">More deets</Nav.Link>
-            <Nav.Link eventKey={2} href="#memes">
-              Dank memes
-            </Nav.Link>
+            {authed ? (
+              <>
+                <Nav.Link href="#" onClick={handleLogout}>
+                  Logout
+                </Nav.Link>
+              </>
+            ) : (
+              <>
+                <Nav.Link href="/login">Login</Nav.Link>
+                <Nav.Link href="/signup">Signup</Nav.Link>
+              </>
+            )}
           </Nav>
         </Navbar.Collapse>
       </Container>

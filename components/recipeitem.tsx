@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import AddRecipe from "./recipe/addrecipe";
+import Pagination from "react-bootstrap/Pagination";
 
 type Ingredient = { name: string; amount: number };
 type Recipe = {
@@ -19,6 +20,8 @@ export default function RecipeItems() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Recipe | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 5;
 
   useEffect(() => {
     let mounted = true;
@@ -75,6 +78,11 @@ export default function RecipeItems() {
     };
   }, []);
 
+  // reset to page 1 whenever the recipes array changes length (e.g., after create)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [recipes?.length]);
+
   // handlers inside component so they can update local state
   async function handleDelete(id?: string | undefined) {
     if (!id) return;
@@ -82,7 +90,11 @@ export default function RecipeItems() {
     try {
       const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
-      setRecipes((prev) => prev?.filter((p) => p._id !== id) || null);
+      // update recipes and ensure current page remains valid
+      const newRecipes = recipes?.filter((p) => p._id !== id) || null;
+      setRecipes(newRecipes);
+      const newTotalPages = Math.max(1, Math.ceil((newRecipes?.length || 0) / PAGE_SIZE));
+      setCurrentPage((cur) => Math.min(cur, newTotalPages));
     } catch (err: any) {
       alert("Delete failed: " + (err.message || err));
     }
@@ -98,9 +110,13 @@ export default function RecipeItems() {
   if (error) return <div className="text-danger">Error: {error}</div>;
   if (!recipes || recipes.length === 0) return <div>No recipes found</div>;
 
+  const totalPages = Math.max(1, Math.ceil(recipes.length / PAGE_SIZE));
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const displayedRecipes = recipes.slice(startIndex, startIndex + PAGE_SIZE);
+
   return (
     <div className="list-group">
-      {recipes.map((r) => (
+  {displayedRecipes.map((r) => (
         <div
           key={r._id || r.name}
           className="list-group-item d-flex align-items-stretch"
@@ -162,6 +178,17 @@ export default function RecipeItems() {
           ) : null}
         </div>
       ))}
+      <Pagination className="mt-3 d-flex justify-content-end">
+        <Pagination.First disabled={currentPage === 1} onClick={() => setCurrentPage(1)} />
+        <Pagination.Prev disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} />
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+          <Pagination.Item key={p} active={p === currentPage} onClick={() => setCurrentPage(p)}>
+            {p}
+          </Pagination.Item>
+        ))}
+        <Pagination.Next disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} />
+        <Pagination.Last disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} />
+      </Pagination>
       <Modal
         size="lg"
         show={showEditModal}

@@ -1,28 +1,24 @@
-// app/api/recipes/route.ts
-import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { Recipe } from "@/models/Recipe";
+// pages API wrapper for recipes — uses pages/api handler signature
+import { connectDB } from "../../../lib/mongodb";
+import { Recipe } from "../../../models/Recipe";
 
-export async function POST(req: Request) {
+export default async function handler(req: any, res: any) {
   try {
     await connectDB();
-    const body = await req.json();
+    if (req.method === "POST") {
+      const body = req.body;
+      const recipe = new Recipe(body);
+      await recipe.save();
+      return res.status(201).json(recipe);
+    }
 
-    const recipe = new Recipe(body);
-    await recipe.save();
+    if (req.method === "GET") {
+      const recipes = await Recipe.find();
+      return res.status(200).json(recipes);
+    }
 
-    return NextResponse.json(recipe, { status: 201 });
+    return res.status(405).json({ error: "Method not allowed" });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
-
-export async function GET() {
-  try {
-    await connectDB();
-    const recipes = await Recipe.find();
-    return NextResponse.json(recipes);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return res.status(500).json({ error: err.message });
   }
 }

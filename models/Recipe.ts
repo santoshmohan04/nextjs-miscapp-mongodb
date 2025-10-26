@@ -11,6 +11,7 @@ export interface IRecipe extends Document {
   description: string;
   imagePath: string;
   ingredients: IIngredient[];
+  createdBy: mongoose.Schema.Types.ObjectId;
 }
 
 // Ingredient schema (no _id for subdocuments)
@@ -28,6 +29,7 @@ const RecipeSchema = new Schema(
     description: { type: String, required: true },
     imagePath: { type: String, required: true },
     ingredients: { type: [IngredientSchema], required: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "AuthUser", required: true },
   },
   { timestamps: true }
 );

@@ -1,52 +1,41 @@
-// app/api/recipes/[id]/route.ts
-import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { Recipe } from "@/models/Recipe";
+// pages API wrapper for individual recipe operations
+import { connectDB } from "../../../../lib/mongodb";
+import { Recipe } from "../../../../models/Recipe";
 
-// UPDATE (PUT) - replace existing recipe by ID
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    await connectDB();
-    const body = await req.json();
+export default async function handler(req: any, res: any) {
+  const {
+    query: { id },
+    method,
+  } = req;
 
-    const updatedRecipe = await Recipe.findByIdAndUpdate(
-      params.id,
-      body,
-      { new: true, runValidators: true } // return updated doc, validate against schema
-    );
-
-    if (!updatedRecipe) {
-      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(updatedRecipe, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
-
-// DELETE - remove recipe by ID
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
   try {
     await connectDB();
 
-    const deletedRecipe = await Recipe.findByIdAndDelete(params.id);
-
-    if (!deletedRecipe) {
-      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    if (method === "PUT") {
+      try {
+        const updatedRecipe = await Recipe.findByIdAndUpdate(id, req.body, {
+          new: true,
+          runValidators: true,
+        });
+        if (!updatedRecipe) return res.status(404).json({ error: "Recipe not found" });
+        return res.status(200).json(updatedRecipe);
+      } catch (err: any) {
+        return res.status(500).json({ error: err.message });
+      }
     }
 
-    return NextResponse.json(
-      { message: "Recipe deleted successfully", recipe: deletedRecipe },
-      { status: 200 }
-    );
+    if (method === "DELETE") {
+      try {
+        const deletedRecipe = await Recipe.findByIdAndDelete(id);
+        if (!deletedRecipe) return res.status(404).json({ error: "Recipe not found" });
+        return res.status(200).json({ message: "Recipe deleted", recipe: deletedRecipe });
+      } catch (err: any) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
+    return res.status(405).json({ error: "Method not allowed" });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return res.status(500).json({ error: err.message });
   }
 }
