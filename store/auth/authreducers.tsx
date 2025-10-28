@@ -15,8 +15,8 @@ export interface IAuthUser extends Document {
   name: string;
   email: string;
   password: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 type AuthState = {

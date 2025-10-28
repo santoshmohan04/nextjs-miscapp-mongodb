@@ -17,8 +17,7 @@ export default function Header() {
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    dispatch(logoutUser());
-    router.push("/login");
+    dispatch(logoutUser(router));
   };
 
   return (
@@ -34,17 +33,30 @@ export default function Header() {
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
-            {isAuthenticated && <Nav.Link as={Link} href="/recipes">Recipes</Nav.Link>}
+            {isAuthenticated && (
+              <Nav.Link as={Link} href="/recipes">
+                Recipes
+              </Nav.Link>
+            )}
           </Nav>
           <Nav>
             {isAuthenticated ? (
-              <Nav.Link href="#" onClick={handleLogout}>
-                Logout
-              </Nav.Link>
+              <>
+                <Nav.Link href="#" onClick={handleLogout}>
+                  Logout
+                </Nav.Link>
+                <Nav.Link as={Link} href="/profile">
+                  My Profile
+                </Nav.Link>
+              </>
             ) : (
               <>
-                <Nav.Link href="/login">Login</Nav.Link>
-                <Nav.Link href="/signup">Signup</Nav.Link>
+                <Nav.Link as={Link} href="/login">
+                  Login
+                </Nav.Link>
+                <Nav.Link as={Link} href="/signup">
+                  Signup
+                </Nav.Link>
               </>
             )}
           </Nav>

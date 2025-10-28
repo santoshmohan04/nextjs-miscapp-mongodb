@@ -18,10 +18,14 @@ export const loginRequest =
     try {
       dispatch({ type: LOGIN_REQUEST });
 
-      const { data } = await axios.post(`api/auth/login`, {
-        email,
-        password,
-      }, {withCredentials: true});
+      const { data } = await axios.post(
+        `api/auth/login`,
+        {
+          email,
+          password,
+        },
+        { withCredentials: true }
+      );
 
       if (data.message === "Login successful" && data.user) {
         const { password: _pw, ...safeUser } = data.user;
@@ -50,11 +54,15 @@ export const registerUser =
     try {
       dispatch({ type: REGISTER_REQUEST });
 
-      const { data } = await axios.post(`api/auth/signup`, {
-        name,
-        email,
-        password,
-      }, {withCredentials: true});
+      const { data } = await axios.post(
+        `api/auth/signup`,
+        {
+          name,
+          email,
+          password,
+        },
+        { withCredentials: true }
+      );
 
       if (data.message === "User created successfully" && data.user) {
         const { password: _pw, ...safeUser } = data.user;
@@ -68,7 +76,6 @@ export const registerUser =
           payload: data.message || "Unexpected response",
         });
       }
-
     } catch (error: any) {
       dispatch({
         type: REGISTER_FAILURE,
@@ -78,7 +85,7 @@ export const registerUser =
   };
 
 // LOGOUT
-export const logoutUser = () => async (dispatch: Dispatch) => {
+export const logoutUser = (router: any) => async (dispatch: Dispatch) => {
   try {
     dispatch({ type: LOGOUT_REQUEST });
 
@@ -87,6 +94,7 @@ export const logoutUser = () => async (dispatch: Dispatch) => {
     localStorage.removeItem("loginUser");
 
     dispatch({ type: LOGOUT_SUCCESS });
+    router.push("/login");
   } catch (error: any) {
     dispatch({
       type: LOGOUT_FAILURE,
