@@ -1,11 +1,20 @@
-import { useState } from 'react';
+"use client";
+
+import React, { useState } from "react";
+
+type PaginationDataProps = {
+  data: any[]; // Replace 'any' with a specific type if known
+  currentpage: number;
+  itemsPerPage: number;
+  changePage: (page: number) => void;
+};
 
 export default function PaginationData({
   data,
   currentpage,
   itemsPerPage,
   changePage,
-}) {
+}: PaginationDataProps) {
   const [totalPages] = useState(Math.ceil(data.length / itemsPerPage));
   return (
     <>
@@ -17,7 +26,7 @@ export default function PaginationData({
               <li
                 key={pageNum}
                 className={`page-item ${
-                  pageNum === currentpage ? 'active' : ''
+                  pageNum === currentpage ? "active" : ""
                 }`}
               >
                 <a
