@@ -18,13 +18,13 @@ import {
   CLEAR_PASSWORD_MESSAGES,
 } from "./authtypes";
 
-export interface IAuthUser extends Document {
-  name: string;
-  email: string;
-  password: string;
+export interface IAuthUser {
+  _id?: string;
+  name?: string;
+  email?: string;
   profilepic?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 type AuthState = {
@@ -118,7 +118,12 @@ const authReducer = (state = initialState, action: any): AuthState => {
       return { ...state, loading: true, error: null };
 
     case UPLOAD_PROFILEPIC_SUCCESS:
-      return { ...state, loading: false, user: action.payload };
+      return {
+        ...state,
+        loading: false,
+        user: { ...state.user, profilepic: action.payload.profilepic },
+        successMessage: action.message,
+      };
 
     case UPLOAD_PROFILEPIC_FAILURE:
       return { ...state, loading: false, error: action.payload };

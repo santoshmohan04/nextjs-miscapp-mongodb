@@ -129,7 +129,15 @@ export default function ProfilePage() {
                         </p>
                         <p className="mb-3">
                           <strong>Last Updated:</strong>{" "}
-                          {new Date(user.updatedAt).toLocaleString()}
+                          {user.updatedAt
+    ? new Date(user.updatedAt).toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "N/A"}
                         </p>
                       </div>
                       <Button
