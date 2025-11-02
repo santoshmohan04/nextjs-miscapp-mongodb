@@ -111,43 +111,34 @@ export const logoutUser = (router: any) => async (dispatch: Dispatch) => {
 };
 
 // ✅ UPLOAD PROFILE PIC
-export const uploadProfilePic =
-  (file: File) => async (dispatch: Dispatch, getState: any) => {
-    try {
-      dispatch({ type: UPLOAD_PROFILEPIC_REQUEST });
+export const uploadProfilePic = (file: File) => async (dispatch: Dispatch) => {
+  try {
+    dispatch({ type: UPLOAD_PROFILEPIC_REQUEST });
 
-      const formData = new FormData();
-      formData.append("file", file);
+    const formData = new FormData();
+    formData.append("file", file);
 
-      const { data } = await axios.post(`/api/profile/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-      });
+    const { data } = await axios.post(`/api/profile/upload`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      withCredentials: true,
+    });
 
-      // The API returns { url: "/uploads/filename.png" }
-      const newPicUrl = data.url;
+    dispatch({
+      type: UPLOAD_PROFILEPIC_SUCCESS,
+      payload: data,
+    });
 
-      // Get current user from Redux / localStorage
-      const currentUser =
-        getState().auth.user ||
-        JSON.parse(localStorage.getItem("loginUser") || "{}");
-      const updatedUser = { ...currentUser, profilepic: newPicUrl };
-
-      // Persist updated user
-      localStorage.setItem("loginUser", JSON.stringify(updatedUser));
-
-      dispatch({
-        type: UPLOAD_PROFILEPIC_SUCCESS,
-        payload: updatedUser,
-      });
-    } catch (error: any) {
-      dispatch({
-        type: UPLOAD_PROFILEPIC_FAILURE,
-        payload:
-          error.response?.data?.message || "Profile picture upload failed",
-      });
-    }
-  };
+    // update localStorage
+    const storedUser = JSON.parse(localStorage.getItem("loginUser") || "{}");
+    storedUser.profilepic = data.profilepic;
+    localStorage.setItem("loginUser", JSON.stringify(storedUser));
+  } catch (error: any) {
+    dispatch({
+      type: UPLOAD_PROFILEPIC_FAILURE,
+      payload: error.response?.data?.error || "Profile picture upload failed",
+    });
+  }
+};
 
   // ✅ CHANGE PASSWORD ACTION
 export const changePassword =

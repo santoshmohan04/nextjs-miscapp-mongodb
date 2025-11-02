@@ -12,7 +12,7 @@ export const getApiDocs = async () => {
       },
       servers: [
         {
-          url: "http://localhost:3000",
+          url: process.env.APP_BASE_URL || "http://localhost:3000",
           description: "Local server",
         },
       ],
