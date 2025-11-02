@@ -5,6 +5,41 @@ import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
 import { ObjectId } from "mongoose";
 
+/**
+ * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     summary: Register a new user
+ *     description: Creates a new account by storing name, email, and password securely.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Doe
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *               password:
+ *                 type: string
+ *                 example: Pass@123
+ *     responses:
+ *       201:
+ *         description: User created successfully.
+ *       400:
+ *         description: Invalid input.
+ *       409:
+ *         description: Email already exists.
+ *       500:
+ *         description: Server error.
+ */
+
 export async function POST(req: Request) {
   try {
     await connectDB();

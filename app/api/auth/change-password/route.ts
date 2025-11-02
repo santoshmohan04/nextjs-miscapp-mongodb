@@ -5,6 +5,47 @@ import AuthUser from "@/models/User";
 import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
+/**
+ * @swagger
+ * /api/profile/change-password:
+ *   post:
+ *     summary: Change user password
+ *     description: Allows authenticated users to change their password by providing the current and new password.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: OldPass@123
+ *               newPassword:
+ *                 type: string
+ *                 example: NewPass@456
+ *     responses:
+ *       200:
+ *         description: Password updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Missing required fields.
+ *       401:
+ *         description: Unauthorized or invalid credentials.
+ *       500:
+ *         description: Server error.
+ */
+
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -24,11 +65,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const { currentPassword, newPassword } = await req.json();
+    // Parse request body
+    const { currentPassword, newPassword, confirmPassword } = await req.json();
 
-    if (!currentPassword || !newPassword) {
+    if (!currentPassword || !newPassword || !confirmPassword) {
       return NextResponse.json(
-        { error: "Current and new password required" },
+        { error: "All password fields are required" },
+        { status: 400 }
+      );
+    }
+
+    if (newPassword !== confirmPassword) {
+      return NextResponse.json(
+        { error: "Passwords do not match" },
         { status: 400 }
       );
     }
