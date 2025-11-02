@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -23,6 +23,9 @@ export default function Login() {
     (state: RootState) => state.auth
   );
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const {
     register,
     handleSubmit,
@@ -42,6 +45,8 @@ export default function Login() {
     dispatch(loginRequest(data.email, data.password));
   };
 
+  if (!mounted) return null;
+
   return (
     <div style={{ maxWidth: "400px", margin: "50px auto" }}>
       <h2 className="mb-4">Login</h2>
@@ -51,6 +56,7 @@ export default function Login() {
           <Form.Control
             type="email"
             placeholder="Enter email"
+            autoComplete="off"
             {...register("email")}
             isInvalid={!!errors.email}
           />
@@ -64,6 +70,7 @@ export default function Login() {
           <Form.Control
             type="password"
             placeholder="Password"
+            autoComplete="off"
             {...register("password")}
             isInvalid={!!errors.password}
           />

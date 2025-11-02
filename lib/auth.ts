@@ -9,7 +9,6 @@ export async function getUserFromToken() {
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
     const { payload } = await jwtVerify(token, secret); 
-    console.log("Authenticated user payload:", payload);
     return payload;
   } catch {
     return null;
