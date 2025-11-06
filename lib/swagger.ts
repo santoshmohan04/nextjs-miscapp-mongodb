@@ -13,7 +13,7 @@ export const getApiDocs = async () => {
       servers: [
         {
           url: process.env.APP_BASE_URL || "http://localhost:3000",
-          description: "Local server",
+          description: "Development server",
         },
       ],
       components: {

@@ -92,6 +92,7 @@ export async function POST(req: Request) {
 
     return response;
   } catch (err: any) {
+    console.error("❌ Login error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
