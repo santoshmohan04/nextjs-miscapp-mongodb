@@ -9,7 +9,7 @@ import bcrypt from "bcryptjs";
  * /api/authusers/{id}:
  *   put:
  *     summary: Update an existing Auth User
- *     description: Updates the details (name, email, profilePic, password) of an existing AuthUser by ID. Requires authentication.
+ *     description: Updates the details (name, email, profilepic, password) of an existing AuthUser by ID. Requires authentication.
  *     tags:
  *       - AuthUsers
  *     security:
@@ -37,7 +37,7 @@ import bcrypt from "bcryptjs";
  *               password:
  *                 type: string
  *                 example: Password@123
- *               profilePic:
+ *               profilepic:
  *                 type: string
  *                 example: https://example.com/avatar.jpg
  *     responses:
@@ -57,7 +57,7 @@ import bcrypt from "bcryptjs";
  *                 email:
  *                   type: string
  *                   example: johndoe@example.com
- *                 profilePic:
+ *                 profilepic:
  *                   type: string
  *                   example: https://example.com/avatar.jpg
  *       400:
@@ -132,7 +132,8 @@ export async function PUT(
     const update: any = {
       name: body.name,
       email: body.email,
-      profilePic: body.profilePic,
+      profilepic: body.profilepic,
+      updatedAt: new Date(),
     };
 
     if (body.password) {

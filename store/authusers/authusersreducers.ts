@@ -68,9 +68,8 @@ const authUsersReducer = (
     case UPDATE_AUTHUSER_SUCCESS:
       return {
         ...state,
-        loading: false,
         users: state.users.map((u) =>
-          u._id === action.payload._id ? action.payload : u
+          u._id === action.payload._id ? { ...u, ...action.payload } : u
         ),
       };
     case UPDATE_AUTHUSER_FAILURE:

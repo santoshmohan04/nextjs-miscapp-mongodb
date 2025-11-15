@@ -16,7 +16,7 @@ const userSchema = new Schema(
 export interface IUser {
   name: string;
   email: string;
-  password: string;
+  password?: string;
   profilepic?: string;
 }
 

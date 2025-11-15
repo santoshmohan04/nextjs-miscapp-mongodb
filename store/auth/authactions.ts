@@ -18,6 +18,8 @@ import {
 } from "./authtypes";
 import axios from "axios";
 import { Dispatch } from "redux";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/utils/firebaseConfig";
 
 // LOGIN
 export const loginRequest =
@@ -110,32 +112,41 @@ export const logoutUser = (router: any) => async (dispatch: Dispatch) => {
   }
 };
 
-// ✅ UPLOAD PROFILE PIC
+// UPLOAD PROFILE PIC
 export const uploadProfilePic = (file: File) => async (dispatch: Dispatch) => {
   try {
     dispatch({ type: UPLOAD_PROFILEPIC_REQUEST });
 
-    const formData = new FormData();
-    formData.append("file", file);
+    // 🔹 Create reference in Firebase
+    const fileRef = ref(storage, `profilepics/${Date.now()}-${file.name}`);
 
-    const { data } = await axios.post(`/api/profile/upload`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true,
-    });
+    // 🔹 Upload to Firebase
+    const snapshot = await uploadBytes(fileRef, file);
 
+    // 🔹 Fetch image download URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    // OPTIONAL: store URL in your backend database
+    await axios.put(
+      `/api/profile/update-profile-pic`,
+      { profilepic: downloadURL },
+      { withCredentials: true }
+    );
+
+    // 🔹 Dispatch success to Redux
     dispatch({
       type: UPLOAD_PROFILEPIC_SUCCESS,
-      payload: data,
+      payload: { profilepic: downloadURL },
     });
 
-    // update localStorage
+    // 🔹 Update localStorage user
     const storedUser = JSON.parse(localStorage.getItem("loginUser") || "{}");
-    storedUser.profilepic = data.profilepic;
+    storedUser.profilepic = downloadURL;
     localStorage.setItem("loginUser", JSON.stringify(storedUser));
   } catch (error: any) {
     dispatch({
       type: UPLOAD_PROFILEPIC_FAILURE,
-      payload: error.response?.data?.error || "Profile picture upload failed",
+      payload: error.response?.data?.error || error.message,
     });
   }
 };

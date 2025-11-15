@@ -1,189 +1,181 @@
 "use client";
-import { RootState } from "@/store/store";
+
+import { useEffect, useState } from "react";
 import {
-  Row,
-  Col,
-  Card,
   Button,
-  Modal,
-  Form,
-  Pagination,
   InputGroup,
   FormControl,
+  Row,
+  Col,
+  Pagination,
 } from "react-bootstrap";
-import { PencilSquare, Trash, PlusLg } from "react-bootstrap-icons";
-import React, { useEffect, useState } from "react";
+import {
+  PlusLg,
+  Grid3x3GapFill,
+  ListUl,
+} from "react-bootstrap-icons";
+
 import { useDispatch, useSelector } from "react-redux";
+
 import {
   fetchAuthUsers,
-  addAuthUser,
-  updateAuthUser,
   removeAuthUser,
 } from "@/store/authusers/authusersactions";
 
-export default function AuthUsersList() {
+import UserCard from "@/components/users/UserCard";
+import UserListItem from "@/components/users/UserListItem";
+import {
+  UserCardSkeleton,
+  UserListSkeleton,
+} from "@/components/users/UserSkeleton";
+
+import UserFormModal from "@/components/users/UserFormModal";
+import { useToast } from "@/components/ToastMessage";
+
+export default function AuthUsersPage() {
   const dispatch = useDispatch<any>();
-  const { users, meta, loading } = useSelector(
-    (state: RootState) => state.authUsers
-  );
+  const { showToast } = useToast();
+
+  // Redux state
+  const { users, loading, meta } = useSelector((state: any) => state.authUsers);
+
+  // UI state
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [page, setPage] = useState(1);
-  const limit = 12;
-  const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    profilepic: "",
-  });
   const [q, setQ] = useState("");
 
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
+  const limit = 12;
+
+  // Fetch data
   useEffect(() => {
     dispatch(fetchAuthUsers(page, limit, q));
-  }, [dispatch, page, q]);
+  }, [page, q, dispatch]);
 
+  // Open Create modal
   function openCreate() {
-    setEditing(null);
-    setForm({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      profilepic: "",
-    });
+    setEditingUser(null);
     setShowModal(true);
   }
 
+  // Open Edit modal
   function openEdit(user: any) {
-    setEditing(user);
-    setForm({
-      name: user.name,
-      email: user.email,
-      password: "",
-      confirmPassword: "",
-      profilepic: user.profilepic || "",
-    });
+    setEditingUser(user);
     setShowModal(true);
   }
 
-  function submitForm(e: React.FormEvent) {
-    e.preventDefault();
-    if (form.password && form.password !== form.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-    if (editing) {
-      dispatch(
-        updateAuthUser(editing._id, {
-          name: form.name,
-          email: form.email,
-          profilePic: form.profilepic,
-          ...(form.password ? { password: form.password } : {}),
-        })
-      );
-    } else {
-      dispatch(
-        addAuthUser({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          profilePic: form.profilepic,
-        })
-      );
-    }
-    setShowModal(false);
+  // Delete user
+  async function onDelete(id: string) {
+    if (!confirm("Delete user permanently?")) return;
+    await dispatch(removeAuthUser(id));
+    showToast("User deleted successfully", "success");
   }
 
-  function onDelete(id: string) {
-    if (!confirm("Delete user?")) return;
-    dispatch(removeAuthUser(id));
-  }
-
+  // Pagination pages
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1;
 
   return (
     <div className="container py-4">
+
+      {/* HEADER */}
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Auth Users</h3>
+
+        <h3 className="fw-bold">Auth Users</h3>
+
+        {/* Search */}
+        <InputGroup style={{ width: 350 }}>
+          <FormControl
+            placeholder="Search name..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <Button variant="outline-secondary" onClick={() => setPage(1)}>
+            Search
+          </Button>
+        </InputGroup>
+
+        {/* View Toggle */}
         <div>
-          <InputGroup>
-            <FormControl
-              placeholder="Search name..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <Button variant="outline-secondary" onClick={() => setPage(1)}>
-              Search
-            </Button>
-          </InputGroup>
+          <Button
+            variant={view === "grid" ? "primary" : "outline-primary"}
+            onClick={() => setView("grid")}
+            className="me-2"
+          >
+            <Grid3x3GapFill />
+          </Button>
+
+          <Button
+            variant={view === "list" ? "primary" : "outline-primary"}
+            onClick={() => setView("list")}
+          >
+            <ListUl />
+          </Button>
         </div>
+
+        {/* Create Button */}
         <Button variant="primary" onClick={openCreate}>
           <PlusLg /> Create
         </Button>
       </div>
 
-      <Row>
-        {loading && <div>Loading...</div>}
-        {!loading && users.length === 0 && <p>No users found.</p>}
-        {users.map((u: any) => (
-          <Col key={u._id} md={3} className="mb-4">
-            <Card className="h-100">
-              <Card.Img
-                variant="top"
-                src={
-                  u.profilepic
-                    ? u.profilepic
-                    : "https://www.pngitem.com/pimgs/m/579-5798505_user-placeholder-svg-hd-png-download.png"
-                }
-                style={{ height: 160, objectFit: "cover" }}
-              />
-              <Card.Body>
-                <Card.Title>{u.name}</Card.Title>
-                <Card.Text className="text-truncate">{u.email}</Card.Text>
-              </Card.Body>
-              <Card.Footer className="d-flex justify-content-between">
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() => openEdit(u)}
-                >
-                  <PencilSquare />
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => onDelete(u._id)}
-                >
-                  <Trash />
-                </Button>
-              </Card.Footer>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <hr />
 
-      <div className="d-flex justify-content-center">
+      {/* GRID or LIST VIEW */}
+      {view === "grid" ? (
+        <Row>
+          {loading
+            ? [...Array(8)].map((_, i) => (
+                <Col key={i} md={3} className="mb-4">
+                  <UserCardSkeleton />
+                </Col>
+              ))
+            : users.map((u: any) => (
+                <Col key={u._id} md={3} className="mb-4">
+                  <UserCard
+                    user={u}
+                    onEdit={() => openEdit(u)}
+                    onDelete={() => onDelete(u._id)}
+                  />
+                </Col>
+              ))}
+        </Row>
+      ) : (
+        <div>
+          {loading
+            ? [...Array(8)].map((_, i) => <UserListSkeleton key={i} />)
+            : users.map((u: any) => (
+                <UserListItem
+                  key={u._id}
+                  user={u}
+                  onEdit={() => openEdit(u)}
+                  onDelete={() => onDelete(u._id)}
+                />
+              ))}
+        </div>
+      )}
+
+      {/* PAGINATION */}
+      <div className="d-flex justify-content-center mt-4">
         <Pagination>
           <Pagination.First onClick={() => setPage(1)} disabled={page === 1} />
           <Pagination.Prev
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
           />
-          {Array.from({ length: totalPages })
-            .slice(Math.max(0, page - 3), page + 2)
-            .map((_, idx) => {
-              const p = idx + Math.max(1, page - 3);
-              return (
-                <Pagination.Item
-                  key={p}
-                  active={p === page}
-                  onClick={() => setPage(p)}
-                >
-                  {p}
-                </Pagination.Item>
-              );
-            })}
+
+          {[...Array(totalPages)].map((_, i) => (
+            <Pagination.Item
+              key={i + 1}
+              active={i + 1 === page}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </Pagination.Item>
+          ))}
+
           <Pagination.Next
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
@@ -195,69 +187,14 @@ export default function AuthUsersList() {
         </Pagination>
       </div>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Form onSubmit={submitForm}>
-          <Modal.Header closeButton>
-            <Modal.Title>{editing ? "Edit User" : "Create User"}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form.Group className="mb-2">
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                required
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>
-                Password {editing ? "(leave blank to keep)" : ""}
-              </Form.Label>
-              <Form.Control
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Confirm Password</Form.Label>
-              <Form.Control
-                type="password"
-                value={form.confirmPassword}
-                onChange={(e) =>
-                  setForm({ ...form, confirmPassword: e.target.value })
-                }
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Profile Pic URL</Form.Label>
-              <Form.Control
-                value={form.profilepic}
-                onChange={(e) =>
-                  setForm({ ...form, profilepic: e.target.value })
-                }
-              />
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary">
-              {editing ? "Update" : "Create"}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+      {/* FORM MODAL */}
+      {showModal && (
+        <UserFormModal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          editingUser={editingUser}
+        />
+      )}
     </div>
   );
 }

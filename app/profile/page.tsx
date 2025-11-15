@@ -8,7 +8,12 @@ import Form from "react-bootstrap/Form";
 import Row from "react-bootstrap/Row";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { uploadProfilePic, changePassword, clearPasswordMessages } from "@/store/auth/authactions";
+import {
+  uploadProfilePic,
+  changePassword,
+  clearPasswordMessages,
+} from "@/store/auth/authactions";
+import { useToast } from "@/components/ToastMessage";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -16,6 +21,7 @@ export default function ProfilePage() {
   const { isAuthenticated, user, loading, error, successMessage } = useSelector(
     (state: RootState) => state.auth
   );
+  const { showToast } = useToast();
 
   // 🔹 Local state for form fields
   const [currentPassword, setCurrentPassword] = useState("");
@@ -53,7 +59,7 @@ export default function ProfilePage() {
   // ✅ Separate effect for success & error handling
   useEffect(() => {
     if (successMessage) {
-      alert(successMessage);
+      showToast(successMessage, "success");
       setCurrentPassword("");
       setPassword("");
       setConfirmPassword("");
@@ -63,7 +69,7 @@ export default function ProfilePage() {
     }
 
     if (error) {
-      alert(error);
+      showToast(error, "danger");
       dispatch(clearPasswordMessages());
     }
   }, [successMessage, error, dispatch]);
@@ -76,7 +82,7 @@ export default function ProfilePage() {
     e.preventDefault();
 
     if (!isFormValid) {
-      alert("Please check your password rules or matching.");
+      showToast("Please check your password rules or matching.", "warning");
       return;
     }
 
@@ -98,9 +104,14 @@ export default function ProfilePage() {
   };
 
   // ✅ Upload to backend (you can later store in MongoDB or S3)
-  const handleUpload = () => {
-    if (!selectedFile) return alert("Please select a file first!");
-    dispatch(uploadProfilePic(selectedFile));
+  const handleUpload = async () => {
+    if (!selectedFile) return showToast("Please select a file first!", "warning");
+
+    setUploading(true);
+
+    await dispatch(uploadProfilePic(selectedFile));
+
+    setUploading(false);
   };
 
   if (!isAuthenticated) {
@@ -130,14 +141,17 @@ export default function ProfilePage() {
                         <p className="mb-3">
                           <strong>Last Updated:</strong>{" "}
                           {user.updatedAt
-    ? new Date(user.updatedAt).toLocaleString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "N/A"}
+                            ? new Date(user.updatedAt).toLocaleString(
+                                undefined,
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )
+                            : "N/A"}
                         </p>
                       </div>
                       <Button

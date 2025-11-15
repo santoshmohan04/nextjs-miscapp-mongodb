@@ -5,10 +5,10 @@ import { getUserFromToken } from "@/lib/auth";
 
 /**
  * @swagger
- * /api/profile/upload:
- *   post:
- *     summary: Upload or update a user's profile picture
- *     description: Accepts an image file, converts it to Base64, stores it in MongoDB, and returns the updated user object.
+ * /api/profile/update-profile-pic:
+ *   put:
+ *     summary: Update user's profile picture URL
+ *     description: Accepts a Firebase Storage download URL and updates the user's profile picture in MongoDB.
  *     tags:
  *       - Profile
  *     security:
@@ -16,16 +16,17 @@ import { getUserFromToken } from "@/lib/auth";
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               file:
+ *               profilepic:
  *                 type: string
- *                 format: binary
+ *                 description: Firebase Storage image URL
+ *                 example: "https://firebasestorage.googleapis.com/v0/b/yourapp/o/profilepics%2F123.png?alt=media"
  *     responses:
  *       200:
- *         description: Profile picture updated successfully
+ *         description: Profile picture URL updated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -33,51 +34,45 @@ import { getUserFromToken } from "@/lib/auth";
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Profile picture updated successfully
+ *                   example: "Profile picture updated successfully"
  *                 profilepic:
  *                   type: string
- *                   format: byte
- *                   example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABVY..."
+ *                   description: Updated Firebase URL
+ *                   example: "https://firebasestorage.googleapis.com/v0/b/yourapp/o/profilepics%2F123.png?alt=media"
  *       400:
- *         description: Invalid or missing file
+ *         description: Missing or invalid profilepic URL
  *       401:
  *         description: Unauthorized
+ *       404:
+ *         description: User not found
  *       500:
  *         description: Server error
  */
 
-export async function POST(req: Request) {
+export async function PUT(req: Request) {
   try {
     await connectDB();
 
-    // 🔒 Authenticate user
+    // Authenticate user
     const user = await getUserFromToken();
     if (!user || typeof user === "string") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse uploaded form data
-    const data = await req.formData();
-    const file = data.get("file") as File | null;
+    // Parse request JSON
+    const { profilepic } = await req.json();
 
-    if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    if (!profilepic || typeof profilepic !== "string") {
+      return NextResponse.json(
+        { error: "profilepic URL is required and must be a string" },
+        { status: 400 }
+      );
     }
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Only image files allowed" }, { status: 400 });
-    }
-
-    // Convert to Base64
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = `data:${file.type};base64,${buffer.toString("base64")}`;
-
-    // Update in MongoDB
+    // Update user profile picture
     const updatedUser = await AuthUser.findByIdAndUpdate(
       (user as any).id,
-      { profilepic: base64Image, updatedAt: new Date() },
+      { profilepic, updatedAt: new Date() },
       { new: true }
     ).select("-password");
 
@@ -90,7 +85,7 @@ export async function POST(req: Request) {
       profilepic: updatedUser.profilepic,
     });
   } catch (err: any) {
-    console.error("Upload error:", err);
+    console.error("Update profile pic error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

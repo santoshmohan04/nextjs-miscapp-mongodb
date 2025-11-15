@@ -14,6 +14,7 @@ import {
   REMOVE_AUTHUSER_SUCCESS,
   REMOVE_AUTHUSER_FAILURE,
 } from "./authuserstypes";
+import { IUser } from "@/models/User";
 
 // 🔹 FETCH all Auth Users (with pagination + search)
 export const fetchAuthUsers =
@@ -33,12 +34,7 @@ export const fetchAuthUsers =
 
 // 🔹 ADD new Auth User
 export const addAuthUser =
-  (userData: {
-    name: string;
-    email: string;
-    password: string;
-    profilePic?: string;
-  }) =>
+  (userData: IUser) =>
   async (dispatch: Dispatch) => {
     try {
       dispatch({ type: ADD_AUTHUSER });
@@ -53,7 +49,7 @@ export const addAuthUser =
 
 // 🔹 UPDATE existing Auth User
 export const updateAuthUser =
-  (id: string, updatedData: any) => async (dispatch: Dispatch) => {
+  (id: string, updatedData: IUser) => async (dispatch: Dispatch) => {
     try {
       dispatch({ type: UPDATE_AUTHUSER });
       const response = await axios.put(`/api/authusers/${id}`, updatedData, {
