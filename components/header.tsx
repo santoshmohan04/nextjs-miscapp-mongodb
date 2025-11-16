@@ -41,6 +41,9 @@ export default function Header() {
                 <Nav.Link as={Link} href="/authusers">
                   Auth Users
                 </Nav.Link>
+                <Nav.Link as={Link} href="/bookmarkslist">
+                  Bookmarks
+                </Nav.Link>
               </>
             )}
           </Nav>
