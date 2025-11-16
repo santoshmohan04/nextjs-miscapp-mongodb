@@ -3,50 +3,14 @@ import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
-import { ObjectId } from "mongoose";
 
 /**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Authenticate user
- *     description: Authenticates a user using email and password and returns a session cookie or token.
- *     tags:
- *       - Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 example: Pass@123
- *     responses:
- *       200:
- *         description: Login successful.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *       401:
- *         description: Invalid credentials.
- *       500:
- *         description: Server error.
+ * Login route
  */
-
 export async function POST(req: Request) {
   try {
     await connectDB();
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -56,7 +20,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await AuthUser.findOne({ email });
+    // Fetch user with password
+    const user = await AuthUser.findOne({ email }).select("+password");
+
     if (!user) {
       return NextResponse.json(
         { error: "Invalid credentials" },
@@ -64,7 +30,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // TS-safe password check
+    const storedHash = user.password ?? "";
+    if (!storedHash) {
+      return NextResponse.json(
+        { error: "User password not found" },
+        { status: 500 }
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, storedHash);
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: "Invalid credentials" },
@@ -72,26 +47,46 @@ export async function POST(req: Request) {
       );
     }
 
+    // JWT signing
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-
     const token = await new SignJWT({
-      id: (user._id as ObjectId).toString(),
+      id: user._id.toString(),
       email: user.email,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("7d")
       .sign(secret);
 
-    const response = NextResponse.json({ message: "Login successful", user });
+    // Convert values safely
+    const safeUser = {
+      id: user._id?.toString() ?? "",
+      name: user.name,
+      email: user.email,
+      profilepic: user.profilepic ?? "",
+      createdAt: user.createdAt ?? null,
+      updatedAt: user.updatedAt ?? null,
+    };
+
+    const response = NextResponse.json({
+      message: "Login successful",
+      user: safeUser,
+    });
+
+    // Cookie
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       path: "/",
       maxAge: 7 * 24 * 60 * 60,
     });
 
     return response;
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("Login error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

@@ -3,7 +3,7 @@ import { createSwaggerSpec } from "next-swagger-doc";
 export const getApiDocs = async () => {
   const spec = createSwaggerSpec({
     definition: {
-      openapi: "3.0.0", // ✅ required at root
+      openapi: "3.0.0",
       info: {
         title: "Misc App API Documentation",
         version: "1.0.0",
@@ -13,7 +13,7 @@ export const getApiDocs = async () => {
       servers: [
         {
           url: process.env.APP_BASE_URL || "http://localhost:3000",
-          description: "Local server",
+          description: "Development server",
         },
       ],
       components: {
@@ -25,19 +25,22 @@ export const getApiDocs = async () => {
             description: "JWT stored in HttpOnly cookie for authentication",
           },
         },
+
+        // 📌 Add Bookmark Schema (REQUIRED)
         schemas: {
           User: {
             type: "object",
             properties: {
-              _id: {
-                type: "string",
-                example: "652c41f3b1a6c1b2d8e90d45",
-              },
+              _id: { type: "string", example: "652c41f3b1a6c1b2d8e90d45" },
               name: { type: "string", example: "John Doe" },
               email: { type: "string", example: "john@example.com" },
               profilepic: {
                 type: "string",
                 example: "/uploads/avatar123.png",
+              },
+              createdAt: {
+                type: "string",
+                example: "2025-10-01T10:00:00Z",
               },
               updatedAt: {
                 type: "string",
@@ -45,6 +48,7 @@ export const getApiDocs = async () => {
               },
             },
           },
+
           Recipe: {
             type: "object",
             properties: {
@@ -76,10 +80,44 @@ export const getApiDocs = async () => {
               updatedAt: { type: "string", format: "date-time" },
             },
           },
+
+          // ⭐ REQUIRED for Bookmarks API to show properly
+          Bookmark: {
+            type: "object",
+            properties: {
+              _id: { type: "string", example: "6730a8e8fcd88cc0951a1af1" },
+              title: { type: "string", example: "Google" },
+              link: {
+                type: "string",
+                example: "https://www.google.com",
+              },
+              description: {
+                type: "string",
+                example: "Search engine homepage",
+              },
+              category: { type: "string", example: "Search Engine" },
+              favorite: { type: "boolean", example: false },
+              thumbnail: {
+                type: "string",
+                example:
+                  "https://api.microlink.io/?url=https://www.google.com&screenshot=true",
+              },
+              createdAt: {
+                type: "string",
+                example: "2025-11-16T08:02:47.620Z",
+              },
+              updatedAt: {
+                type: "string",
+                example: "2025-11-16T08:02:47.620Z",
+              },
+            },
+          },
         },
       },
     },
-    apiFolder: "app/api", // ✅ automatically scans all route.ts
+
+    // Automatically scan all `route.ts` files
+    apiFolder: "app/api",
   });
 
   return spec;

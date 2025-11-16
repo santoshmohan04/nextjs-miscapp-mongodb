@@ -2,7 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Header from "@/components/header";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Providers } from '@/store/providers';
+import { Providers } from "@/store/providers";
+import { ToastProvider } from "@/components/ToastMessage";
 
 export const metadata: Metadata = {
   title: "Misc Apps",
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-       <Providers>
+        <Providers>
           <Header />
-          <div className="container mt-5">{children}</div>
+          <div className="container mt-3">
+            <ToastProvider>{children}</ToastProvider>
+          </div>
         </Providers>
       </body>
     </html>
