@@ -1,7 +1,9 @@
 import "./globals.css";
 import type { Metadata } from "next";
+
 import Header from "@/components/header";
 import "bootstrap/dist/css/bootstrap.min.css";
+
 import { Providers } from "@/store/providers";
 import { ToastProvider } from "@/components/ToastMessage";
 

@@ -8,7 +8,7 @@ import Navbar from "react-bootstrap/Navbar";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { logoutUser } from "@/store/auth/authactions";
+import { logoutUser } from "@/store/auth/authActions";
 
 export default function Header() {
   const router = useRouter();

@@ -1,6 +1,6 @@
 // store.ts
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./auth/authreducers";
+import authReducer from "./auth/authReducers";
 import recipeReducer from "./recipies/recipiesreducers";
 import authUsersReducer from "./authusers/authusersreducers";
 import bookmarksReducer from "./bookmarks/reducers";
@@ -10,7 +10,7 @@ export const store = configureStore({
     auth: authReducer,
     recipes: recipeReducer,
     authUsers: authUsersReducer,
-    bookmarks: bookmarksReducer
+    bookmarks: bookmarksReducer,
   },
   // middleware like redux-thunk is included by default
 });

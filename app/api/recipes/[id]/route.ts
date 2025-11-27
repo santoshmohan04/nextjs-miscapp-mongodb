@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Recipe } from "@/models/Recipe";
-import { getUserFromToken } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 
 /**
  * @swagger
@@ -10,59 +10,33 @@ import { getUserFromToken } from "@/lib/auth";
  *     tags:
  *       - Recipes
  *     summary: Update a recipe by ID
- *     description: Updates an existing recipe belonging to the authenticated user.
+ *     description: Updates a recipe owned by the authenticated user.
  *     security:
  *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The ID of the recipe to update
+ *         description: The recipe ID
  *         schema:
  *           type: string
- *           example: 6534abf8a31f123456789012
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 example: "Paneer Butter Masala"
- *               description:
- *                 type: string
- *                 example: "A rich creamy curry made with paneer and tomato gravy"
- *               ingredients:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     name:
- *                       type: string
- *                       example: "Paneer"
- *                     amount:
- *                       type: number
- *                       example: 200
- *               imagePath:
- *                 type: string
- *                 example: "https://source.unsplash.com/400x300/?paneer,indian"
+ *             $ref: "#/components/schemas/Recipe"
  *     responses:
  *       200:
- *         description: Recipe updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Recipe'
+ *         description: Recipe updated successfully.
  *       401:
- *         description: Unauthorized (user not logged in)
+ *         description: Unauthorized.
  *       403:
- *         description: Forbidden (user doesn’t own the recipe)
+ *         description: Forbidden.
  *       404:
- *         description: Recipe not found
+ *         description: Recipe not found.
  *       500:
- *         description: Server error
+ *         description: Server error.
  */
 
 /**
@@ -72,78 +46,54 @@ import { getUserFromToken } from "@/lib/auth";
  *     tags:
  *       - Recipes
  *     summary: Delete a recipe by ID
- *     description: Deletes a recipe that belongs to the authenticated user.
+ *     description: Deletes a recipe owned by the authenticated user.
  *     security:
  *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The ID of the recipe to delete
+ *         description: The recipe ID
  *         schema:
  *           type: string
- *           example: 6534abf8a31f123456789012
  *     responses:
  *       200:
- *         description: Recipe deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Recipe deleted successfully"
- *                 recipe:
- *                   $ref: '#/components/schemas/Recipe'
+ *         description: Recipe deleted successfully.
  *       401:
- *         description: Unauthorized (user not logged in)
+ *         description: Unauthorized.
  *       403:
- *         description: Forbidden (user doesn’t own the recipe)
+ *         description: Forbidden.
  *       404:
- *         description: Recipe not found
+ *         description: Recipe not found.
  *       500:
- *         description: Server error
+ *         description: Server error.
  */
 
-export async function PUT(req: Request, context: { params: any }) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
 
-    // 🔒 Authenticate user
-    const rawUser = await getUserFromToken();
-    if (!rawUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const userId =
-      typeof rawUser === "string"
-        ? rawUser
-        : (rawUser as any).id ?? (rawUser as any)._id ?? (rawUser as any).sub;
-
-    if (!userId) {
+    const user = await getSessionUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-
-    // normalize params (next typings sometimes make params a Promise)
-    const paramsObj =
-      typeof context.params?.then === "function"
-        ? await context.params
-        : context.params;
-
-    // Find recipe and ensure it belongs to the user
-    const recipe = await Recipe.findById(paramsObj.id);
+    const recipe = await Recipe.findById(params.id);
     if (!recipe) {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
 
-    if (recipe.createdBy.toString() !== userId) {
+    // Ensure recipe belongs to logged-in user
+    if (recipe.createdBy.toString() !== user._id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Update recipe
-    const updatedRecipe = await Recipe.findByIdAndUpdate(paramsObj.id, body, {
+    const body = await req.json();
+
+    const updatedRecipe = await Recipe.findByIdAndUpdate(params.id, body, {
       new: true,
       runValidators: true,
     });
@@ -154,44 +104,35 @@ export async function PUT(req: Request, context: { params: any }) {
   }
 }
 
-export async function DELETE(req: Request, context: { params: any }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
 
-    // 🔒 Authenticate user
-    const rawUser = await getUserFromToken();
-    if (!rawUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const userId =
-      typeof rawUser === "string"
-        ? rawUser
-        : (rawUser as any).id ?? (rawUser as any)._id ?? (rawUser as any).sub;
-
-    if (!userId) {
+    const user = await getSessionUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // normalize params (next typings sometimes make params a Promise)
-    const paramsObj =
-      typeof context.params?.then === "function"
-        ? await context.params
-        : context.params;
-
-    // Find recipe and ensure it belongs to the user
-    const recipe = await Recipe.findById(paramsObj.id);
+    const recipe = await Recipe.findById(params.id);
     if (!recipe) {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
 
-    if (recipe.createdBy.toString() !== userId) {
+    // Ensure recipe belongs to logged-in user
+    if (recipe.createdBy.toString() !== user._id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-  const deletedRecipe = await Recipe.findByIdAndDelete(paramsObj.id);
+    const deleted = await Recipe.findByIdAndDelete(params.id);
 
     return NextResponse.json(
-      { message: "Recipe deleted successfully", recipe: deletedRecipe },
+      {
+        message: "Recipe deleted successfully",
+        recipe: deleted,
+      },
       { status: 200 }
     );
   } catch (err: any) {

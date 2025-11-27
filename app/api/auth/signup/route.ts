@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { SignJWT } from "jose";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
+import { signToken } from "@/lib/jwt";
 
 /**
  * @swagger
@@ -18,65 +18,40 @@ export async function POST(req: Request) {
     await connectDB();
     const { name, email, password } = await req.json();
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password)
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: "All fields required" },
         { status: 400 }
       );
-    }
 
-    const existingUser = await AuthUser.findOne({ email });
-    if (existingUser) {
+    const exists = await AuthUser.findOne({ email });
+    if (exists)
       return NextResponse.json(
-        { error: "Email already registered" },
-        { status: 400 }
+        { error: "Email already exists" },
+        { status: 409 }
       );
-    }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-    const newUser = await AuthUser.create({
+    const user = await AuthUser.create({
       name,
       email,
-      password: hashedPassword,
+      password: hashed,
     });
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const token = await signToken({ id: user._id.toString() });
 
-    // 🔐 Correct & clean JWT payload
-    const token = await new SignJWT({
-      id: newUser._id.toString(), // 👍 SAFE — _id is mongoose.Types.ObjectId
-      email: newUser.email,
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("7d")
-      .sign(secret);
-
-    const response = NextResponse.json(
-      {
-        message: "User created successfully",
-        user: {
-          _id: newUser._id.toString(),
-          name: newUser.name,
-          email: newUser.email,
-          profilepic: newUser.profilepic || null,
-          createdAt: newUser.createdAt,
-          updatedAt: newUser.updatedAt,
-        },
-      },
-      { status: 201 }
-    );
-
-    response.cookies.set("token", token, {
+    const res = NextResponse.json({ message: "Signup successful", user });
+    res.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 86400,
       path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
-    return response;
+    return res;
   } catch (err: any) {
-    console.error("Signup error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

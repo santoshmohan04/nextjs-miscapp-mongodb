@@ -12,7 +12,7 @@ import {
   uploadProfilePic,
   changePassword,
   clearPasswordMessages,
-} from "@/store/auth/authactions";
+} from "@/store/auth/authActions";
 import { useToast } from "@/components/ToastMessage";
 
 export default function ProfilePage() {
@@ -105,7 +105,8 @@ export default function ProfilePage() {
 
   // ✅ Upload to backend (you can later store in MongoDB or S3)
   const handleUpload = async () => {
-    if (!selectedFile) return showToast("Please select a file first!", "warning");
+    if (!selectedFile)
+      return showToast("Please select a file first!", "warning");
 
     setUploading(true);
 

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
-import { getUserFromToken } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 
 /**
  * @swagger
  * /api/profile/update-profile-pic:
  *   put:
  *     summary: Update user's profile picture URL
- *     description: Accepts a Firebase Storage download URL and updates the user's profile picture in MongoDB.
+ *     description: Updates the authenticated user's profile picture with a Firebase image URL.
  *     tags:
  *       - Profile
  *     security:
@@ -19,59 +19,46 @@ import { getUserFromToken } from "@/lib/auth";
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - profilepic
  *             properties:
  *               profilepic:
  *                 type: string
- *                 description: Firebase Storage image URL
- *                 example: "https://firebasestorage.googleapis.com/v0/b/yourapp/o/profilepics%2F123.png?alt=media"
+ *                 example: "https://firebasestorage.googleapis.com/v0/b/app/o/profilepics%2F123.png?alt=media"
  *     responses:
  *       200:
- *         description: Profile picture URL updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Profile picture updated successfully"
- *                 profilepic:
- *                   type: string
- *                   description: Updated Firebase URL
- *                   example: "https://firebasestorage.googleapis.com/v0/b/yourapp/o/profilepics%2F123.png?alt=media"
+ *         description: Profile picture updated successfully.
  *       400:
- *         description: Missing or invalid profilepic URL
+ *         description: Invalid input.
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized.
  *       404:
- *         description: User not found
+ *         description: User not found.
  *       500:
- *         description: Server error
+ *         description: Server error.
  */
-
 export async function PUT(req: Request) {
   try {
     await connectDB();
 
-    // Authenticate user
-    const user = await getUserFromToken();
-    if (!user || typeof user === "string") {
+    // Authenticate user (cookie based)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse request JSON
     const { profilepic } = await req.json();
 
     if (!profilepic || typeof profilepic !== "string") {
       return NextResponse.json(
-        { error: "profilepic URL is required and must be a string" },
+        { error: "A valid profilepic URL is required" },
         { status: 400 }
       );
     }
 
-    // Update user profile picture
+    // Update user in DB
     const updatedUser = await AuthUser.findByIdAndUpdate(
-      (user as any).id,
+      sessionUser._id,
       { profilepic, updatedAt: new Date() },
       { new: true }
     ).select("-password");
