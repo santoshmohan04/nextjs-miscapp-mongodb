@@ -1,0 +1,120 @@
+:root {
+  --body-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --msger-bg: #fff;
+  --border: 2px solid #ddd;
+  --left-msg-bg: #ececec;
+  --right-msg-bg: #579ffb;
+}
+
+.msger {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  max-width: 867px;
+  width: 100%;
+  height: 90vh;
+  background: var(--msger-bg);
+  border: var(--border);
+  border-radius: 5px;
+  box-shadow: 0 15px 15px -5px rgba(0, 0, 0, 0.2);
+  margin: auto;
+}
+
+.msgerHeader {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: var(--border);
+  background: #eee;
+}
+
+.msgerChat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #fcfcfe;
+}
+
+/* scrollbar */
+.msgerChat::-webkit-scrollbar {
+  width: 6px;
+}
+.msgerChat::-webkit-scrollbar-track {
+  background: #ddd;
+}
+.msgerChat::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+}
+
+.msg {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+.leftMsg .msgBubble {
+  background: var(--left-msg-bg);
+  border-bottom-left-radius: 0;
+}
+.rightMsg {
+  flex-direction: row-reverse;
+}
+.rightMsg .msgBubble {
+  background: var(--right-msg-bg);
+  color: #fff;
+  border-bottom-right-radius: 0;
+}
+.rightMsg .msgImg {
+  margin: 0 0 0 10px;
+}
+
+.msgImg {
+  width: 50px;
+  height: 50px;
+  background-size: cover;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.msgBubble {
+  max-width: 450px;
+  padding: 15px;
+  border-radius: 15px;
+}
+
+.msgInfo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.msgInfoName {
+  font-weight: bold;
+}
+
+.msgerInputArea {
+  display: flex;
+  padding: 10px;
+  background: #eee;
+  border-top: var(--border);
+}
+
+.msgerInput {
+  flex: 1;
+  padding: 10px;
+  border-radius: 4px;
+  background: #ddd;
+}
+
+.msgerSendBtn {
+  margin-left: 10px;
+  padding: 10px 18px;
+  background: rgb(0, 196, 65);
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+  border: none;
+}
+.msgerSendBtn:hover {
+  background: rgb(0, 180, 50);
+}

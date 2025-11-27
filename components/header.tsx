@@ -44,6 +44,9 @@ export default function Header() {
                 <Nav.Link as={Link} href="/bookmarkslist">
                   Bookmarks
                 </Nav.Link>
+                <Nav.Link as={Link} href="/chatapp">
+                  Chatapp
+                </Nav.Link>
               </>
             )}
           </Nav>
