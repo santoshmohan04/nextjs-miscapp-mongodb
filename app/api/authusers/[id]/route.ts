@@ -1,54 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
 import { getSessionUser } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
-/**
- * @swagger
- * /api/authusers/{id}:
- *   put:
- *     summary: Update an existing Auth User
- *     description: Updates name, email, profilepic, or password of an AuthUser by ID.
- *     tags:
- *       - AuthUsers
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       201:
- *         description: User updated successfully.
- *       400:
- *         description: Invalid ID or missing fields.
- *       401:
- *         description: Unauthorized.
- *       404:
- *         description: User not found.
- *       500:
- *         description: Server error.
- */
+// ------------------------
+// UPDATE USER
+// ------------------------
 export async function PUT(
-  req: NextRequest,
-  context: { params: { id: string } }
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    // Authenticate
     const currentUser = await getSessionUser();
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await params;
 
-    // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
@@ -62,7 +35,6 @@ export async function PUT(
       updatedAt: new Date(),
     };
 
-    // Hash password if provided
     if (body.password) {
       update.password = await bcrypt.hash(body.password, 10);
     }
@@ -75,43 +47,18 @@ export async function PUT(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(updatedUser, { status: 201 });
+    return NextResponse.json(updatedUser, { status: 200 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-/**
- * @swagger
- * /api/authusers/{id}:
- *   delete:
- *     summary: Delete an Auth User
- *     description: Deletes an AuthUser by ID.
- *     tags:
- *       - AuthUsers
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Successfully deleted user.
- *       400:
- *         description: Invalid ID.
- *       401:
- *         description: Unauthorized.
- *       404:
- *         description: User not found.
- *       500:
- *         description: Server error.
- */
+// ------------------------
+// DELETE USER
+// ------------------------
 export async function DELETE(
-  req: NextRequest,
-  context: { params: { id: string } }
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -121,7 +68,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });

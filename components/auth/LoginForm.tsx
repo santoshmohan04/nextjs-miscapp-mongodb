@@ -39,19 +39,19 @@ export default function LoginForm() {
     mode: "onChange",
   });
 
-  // Redirect after login
+  /** 🔒 Redirect after login */
   useEffect(() => {
     if (isAuthenticated) {
       router.push("/recipes");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
-  // Show toast on error
+  /** ❗ Fix: Only depend on error, NOT showToast */
   useEffect(() => {
     if (error) {
       showToast(error, "danger", 3000);
     }
-  }, [error, showToast]);
+  }, [error]); // <= fixed dependency
 
   const onSubmit = (data: LoginFormData) => {
     dispatch(loginRequest(data.email, data.password));
@@ -84,7 +84,7 @@ export default function LoginForm() {
         />
       </Form.Group>
 
-      {/* Submit Button */}
+      {/* Submit */}
       <Button
         variant="primary"
         type="submit"

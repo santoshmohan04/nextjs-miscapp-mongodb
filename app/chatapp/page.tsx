@@ -19,9 +19,5 @@ export default function ChatAppPage() {
     return null;
   }
 
-  return (
-    <div style={{ padding: 20 }}>
-      <ChatUI />
-    </div>
-  );
+  return <ChatUI />;
 }

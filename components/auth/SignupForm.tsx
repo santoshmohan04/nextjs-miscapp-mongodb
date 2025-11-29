@@ -41,21 +41,23 @@ export default function SignupForm() {
     mode: "onChange",
   });
 
-  const onSubmit = (data: SignupFormData) => {
-    dispatch(registerUser(data.name, data.email, data.password));
-  };
-
-  // Success redirect
+  /** 🔒 Redirect on signup success */
   useEffect(() => {
     if (isAuthenticated) {
       router.push("/recipes");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
-  // Show toast for error
+  /** ❗ Fix: Only trigger on error */
   useEffect(() => {
-    if (error) showToast(error, "danger", 3000);
-  }, [error, showToast]);
+    if (error) {
+      showToast(error, "danger", 3000);
+    }
+  }, [error]);
+
+  const onSubmit = (data: SignupFormData) => {
+    dispatch(registerUser(data.name, data.email, data.password));
+  };
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
