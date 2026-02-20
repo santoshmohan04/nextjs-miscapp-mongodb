@@ -1,96 +1,61 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { SignJWT } from "jose";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
-import { ObjectId } from "mongoose";
+import { signToken } from "@/lib/jwt";
 
 /**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Authenticate user
- *     description: Authenticates a user using email and password and returns a session cookie or token.
- *     tags:
- *       - Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 example: Pass@123
- *     responses:
- *       200:
- *         description: Login successful.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *       401:
- *         description: Invalid credentials.
- *       500:
- *         description: Server error.
+ * Login route
  */
-
 export async function POST(req: Request) {
   try {
     await connectDB();
     const { email, password } = await req.json();
 
-    if (!email || !password) {
+    if (!email || !password)
       return NextResponse.json(
-        { error: "Email and password required" },
+        { error: "Email & password required" },
         { status: 400 }
       );
-    }
 
-    const user = await AuthUser.findOne({ email });
-    if (!user) {
+    const user = await AuthUser.findOne({ email }).select("+password");
+    if (!user)
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
-    }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    const stored = user.password ?? "";
+    const match = await bcrypt.compare(password, stored);
+
+    if (!match)
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
-    }
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const token = await signToken({ id: user._id.toString() });
 
-    const token = await new SignJWT({
-      id: (user._id as ObjectId).toString(),
+    const safeUser = {
+      id: user._id.toString(),
+      name: user.name,
       email: user.email,
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("7d")
-      .sign(secret);
+      profilepic: user.profilepic ?? "",
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
 
-    const response = NextResponse.json({ message: "Login successful", user });
-    response.cookies.set("token", token, {
+    const res = NextResponse.json({ message: "Login success", user: safeUser });
+
+    res.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 7 * 86400,
     });
 
-    return response;
+    return res;
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

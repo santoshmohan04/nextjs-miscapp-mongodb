@@ -1,33 +1,17 @@
-// middleware.ts
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import { verifyToken } from "@/lib/jwt";
 
-export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  // Allow public routes
-  if (pathname.startsWith("/api/auth") || pathname.startsWith("/_next") || pathname.startsWith("/api/docs")) {
-    return NextResponse.next();
-  }
-
+export async function middleware(req: any) {
   const token = req.cookies.get("token")?.value;
 
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!token) return NextResponse.redirect(new URL("/auth", req.url));
 
-  try {
-    // jwtVerify expects a KeyLike — for HMAC secrets provide a Uint8Array
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
-    await jwtVerify(token, secret);
-    return NextResponse.next();
-  } catch (err) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+  const valid = await verifyToken(token);
+  if (!valid) return NextResponse.redirect(new URL("/auth", req.url));
+
+  return NextResponse.next();
 }
 
-// Apply middleware only to API routes
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: ["/dashboard/:path*", "/profile/:path*"], // protect routes
 };

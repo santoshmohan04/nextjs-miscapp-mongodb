@@ -1,28 +1,34 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { restoreSession } from "@/store/auth/authactions";
 
 export default function Home() {
-  const [authed, setAuthed] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch<any>();
 
+  const { isAuthenticated, loading } = useSelector(
+    (state: RootState) => state.auth
+  );
+
+  // Restore session on page load
   useEffect(() => {
-    try {
-      const v = localStorage.getItem("auth");
-      if (v) {
-        setAuthed(true);
-        // redirect to the recipes route when authenticated
-        router.push("/recipes");
-      } else {
-        // redirect to the login route when not authenticated
-        router.push("/login");
-      }
-    } catch (e) {
-      setAuthed(false);
-      router.push("/login");
+    dispatch(restoreSession());
+  }, [dispatch]);
+
+  // Redirect once session state is known
+  useEffect(() => {
+    if (loading) return; // Wait until restoreSession finishes
+
+    if (isAuthenticated) {
+      router.push("/recipes");
+    } else {
+      router.push("/auth");
     }
-  }, []);
+  }, [isAuthenticated, loading, router]);
 
   return <div>Redirecting…</div>;
 }

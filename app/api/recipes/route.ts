@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Recipe } from "@/models/Recipe";
-import { getUserFromToken } from "@/lib/auth";
 import mongoose from "mongoose";
+import { getSessionUser } from "@/lib/auth";
 
 /**
  * @swagger
@@ -23,13 +23,12 @@ import mongoose from "mongoose";
  *             properties:
  *               name:
  *                 type: string
- *                 example: "Puliyodarai (Tamarind Rice)"
+ *                 example: "Puliyodarai"
  *               description:
  *                 type: string
- *                 example: "A tangy South Indian rice dish made with tamarind and spices."
+ *                 example: "A tangy South Indian rice dish"
  *               imagePath:
  *                 type: string
- *                 example: "https://source.unsplash.com/400x300/?indian,food"
  *               ingredients:
  *                 type: array
  *                 items:
@@ -37,22 +36,40 @@ import mongoose from "mongoose";
  *                   properties:
  *                     name:
  *                       type: string
- *                       example: "Tamarind"
  *                     amount:
  *                       type: number
- *                       example: 100
  *     responses:
  *       201:
  *         description: Recipe created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Recipe'
  *       401:
- *         description: Unauthorized (user not logged in)
+ *         description: Unauthorized
  *       500:
  *         description: Server error
  */
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+
+    // 🔐 Authenticate user using new getSessionUser()
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+
+    // Save recipe with authenticated user ID
+    const recipe = await Recipe.create({
+      ...body,
+      createdBy: new mongoose.Types.ObjectId(user._id),
+    });
+
+    return NextResponse.json(recipe, { status: 201 });
+  } catch (err: any) {
+    console.error("POST /api/recipes error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
 
 /**
  * @swagger
@@ -60,64 +77,35 @@ import mongoose from "mongoose";
  *   get:
  *     tags:
  *       - Recipes
- *     summary: Get all recipes for the logged-in user
- *     description: Retrieves a list of recipes created by the authenticated user.
+ *     summary: Get all recipes for current user
+ *     description: Fetches recipes created by the authenticated user.
  *     security:
  *       - cookieAuth: []
  *     responses:
  *       200:
- *         description: List of recipes for the authenticated user
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Recipe'
+ *         description: List of recipes
  *       401:
- *         description: Unauthorized (user not logged in)
+ *         description: Unauthorized
  *       500:
  *         description: Server error
  */
-
-export async function POST(req: Request) {
-  try {
-    await connectDB();
-
-    // 🔒 Authenticate user
-    const user = await getUserFromToken();
-    if (!user || typeof user === "string") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await req.json();
-
-    // Optionally attach the user id to the recipe
-    const userId = (user as any).id;
-    const recipe = new Recipe({ ...body, createdBy: userId });
-    await recipe.save();
-
-    return NextResponse.json(recipe, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
-
 export async function GET() {
   try {
     await connectDB();
 
-    const user = await getUserFromToken();
+    // 🔐 Authenticate user
+    const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Convert string id directly to ObjectId
-    const userId = new mongoose.Types.ObjectId((user as { id: string }).id);
+    const recipes = await Recipe.find({
+      createdBy: new mongoose.Types.ObjectId(user._id),
+    });
 
-    const recipes = await Recipe.find({ createdBy: userId });
     return NextResponse.json(recipes);
   } catch (err: any) {
+    console.error("GET /api/recipes error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-

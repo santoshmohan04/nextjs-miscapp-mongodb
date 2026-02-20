@@ -5,12 +5,13 @@ const swaggerDefinition = {
   info: {
     title: "Misc App API Documentation",
     version: "1.0.0",
-    description: "API documentation for Misc App built with Next.js and MongoDB",
+    description:
+      "API documentation for Misc App built with Next.js and MongoDB",
   },
   servers: [
     {
-      url: "http://localhost:3000",
-      description: "Local server",
+      url: process.env.APP_BASE_URL || "http://localhost:3000",
+      description: "Development server",
     },
   ],
   components: {

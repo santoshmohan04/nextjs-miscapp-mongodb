@@ -16,25 +16,28 @@ import {
   CHANGE_PASSWORD_FAILURE,
   CLEAR_PASSWORD_MESSAGES,
 } from "./authtypes";
+
 import axios from "axios";
 import { Dispatch } from "redux";
 
-// LOGIN
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/utils/firebaseConfig";
+
+/* -------------------------------------------------------------------------- */
+/*                               LOGIN ACTION                                  */
+/* -------------------------------------------------------------------------- */
 export const loginRequest =
   (email: string, password: string) => async (dispatch: Dispatch) => {
     try {
       dispatch({ type: LOGIN_REQUEST });
 
       const { data } = await axios.post(
-        `api/auth/login`,
-        {
-          email,
-          password,
-        },
+        `/api/auth/login`,
+        { email, password },
         { withCredentials: true }
       );
 
-      if (data.message === "Login successful" && data.user) {
+      if (data?.user) {
         const { password: _pw, ...safeUser } = data.user;
 
         localStorage.setItem("loginUser", JSON.stringify(safeUser));
@@ -43,18 +46,20 @@ export const loginRequest =
       } else {
         dispatch({
           type: LOGIN_FAILURE,
-          payload: data.message || "Unexpected response",
+          payload: data.message || "Unexpected login response",
         });
       }
     } catch (error: any) {
       dispatch({
         type: LOGIN_FAILURE,
-        payload: error.response?.data?.message || "Login failed",
+        payload: error.response?.data?.error || "Login failed",
       });
     }
   };
 
-// REGISTER
+/* -------------------------------------------------------------------------- */
+/*                              REGISTER ACTION                                */
+/* -------------------------------------------------------------------------- */
 export const registerUser =
   (name: string, email: string, password: string) =>
   async (dispatch: Dispatch) => {
@@ -62,16 +67,12 @@ export const registerUser =
       dispatch({ type: REGISTER_REQUEST });
 
       const { data } = await axios.post(
-        `api/auth/signup`,
-        {
-          name,
-          email,
-          password,
-        },
+        `/api/auth/signup`,
+        { name, email, password },
         { withCredentials: true }
       );
 
-      if (data.message === "User created successfully" && data.user) {
+      if (data?.message === "User created successfully" && data.user) {
         const { password: _pw, ...safeUser } = data.user;
 
         localStorage.setItem("loginUser", JSON.stringify(safeUser));
@@ -80,28 +81,30 @@ export const registerUser =
       } else {
         dispatch({
           type: REGISTER_FAILURE,
-          payload: data.message || "Unexpected response",
+          payload: data.message || "Unexpected registration response",
         });
       }
     } catch (error: any) {
       dispatch({
         type: REGISTER_FAILURE,
-        payload: error.response?.data?.message || "Registration failed",
+        payload: error.response?.data?.error || "Registration failed",
       });
     }
   };
 
-// LOGOUT
+/* -------------------------------------------------------------------------- */
+/*                                 LOGOUT                                      */
+/* -------------------------------------------------------------------------- */
 export const logoutUser = (router: any) => async (dispatch: Dispatch) => {
   try {
     dispatch({ type: LOGOUT_REQUEST });
 
-    await axios.post(`api/auth/logout`, {}, { withCredentials: true });
+    await axios.post(`/api/auth/logout`, {}, { withCredentials: true });
 
     localStorage.removeItem("loginUser");
 
     dispatch({ type: LOGOUT_SUCCESS });
-    router.push("/login");
+    router.push("/auth");
   } catch (error: any) {
     dispatch({
       type: LOGOUT_FAILURE,
@@ -110,37 +113,42 @@ export const logoutUser = (router: any) => async (dispatch: Dispatch) => {
   }
 };
 
-// ✅ UPLOAD PROFILE PIC
+/* -------------------------------------------------------------------------- */
+/*                           UPLOAD PROFILE PICTURE                             */
+/* -------------------------------------------------------------------------- */
 export const uploadProfilePic = (file: File) => async (dispatch: Dispatch) => {
   try {
     dispatch({ type: UPLOAD_PROFILEPIC_REQUEST });
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const fileRef = ref(storage, `profilepics/${Date.now()}-${file.name}`);
+    const snapshot = await uploadBytes(fileRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
 
-    const { data } = await axios.post(`/api/profile/upload`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true,
-    });
+    await axios.put(
+      `/api/profile/update-profile-pic`,
+      { profilepic: downloadURL },
+      { withCredentials: true }
+    );
 
     dispatch({
       type: UPLOAD_PROFILEPIC_SUCCESS,
-      payload: data,
+      payload: { profilepic: downloadURL },
     });
 
-    // update localStorage
     const storedUser = JSON.parse(localStorage.getItem("loginUser") || "{}");
-    storedUser.profilepic = data.profilepic;
+    storedUser.profilepic = downloadURL;
     localStorage.setItem("loginUser", JSON.stringify(storedUser));
   } catch (error: any) {
     dispatch({
       type: UPLOAD_PROFILEPIC_FAILURE,
-      payload: error.response?.data?.error || "Profile picture upload failed",
+      payload: error.response?.data?.error || "Profile pic update failed",
     });
   }
 };
 
-  // ✅ CHANGE PASSWORD ACTION
+/* -------------------------------------------------------------------------- */
+/*                              CHANGE PASSWORD                                */
+/* -------------------------------------------------------------------------- */
 export const changePassword =
   (currentPassword: string, newPassword: string, confirmPassword: string) =>
   async (dispatch: Dispatch) => {
@@ -168,7 +176,29 @@ export const changePassword =
     }
   };
 
-// ✅ CLEAR PASSWORD MESSAGES ACTION
-export const clearPasswordMessages = () => (dispatch: Dispatch) => {
+export const clearPasswordMessages = () => (dispatch: Dispatch) =>
   dispatch({ type: CLEAR_PASSWORD_MESSAGES });
+
+/* -------------------------------------------------------------------------- */
+/*                           RESTORE SESSION (Persist Login)                   */
+/* -------------------------------------------------------------------------- */
+export const restoreSession = () => async (dispatch: Dispatch) => {
+  try {
+    const res = await fetch("/api/auth/me", {
+      credentials: "include",
+    });
+
+    if (!res.ok) throw new Error("Not logged in");
+
+    const { user } = await res.json();
+
+    if (!user) throw new Error("Invalid session");
+
+    dispatch({ type: LOGIN_SUCCESS, payload: user });
+
+    localStorage.setItem("loginUser", JSON.stringify(user));
+  } catch {
+    dispatch({ type: LOGOUT_SUCCESS });
+    localStorage.removeItem("loginUser");
+  }
 };

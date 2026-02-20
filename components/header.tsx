@@ -34,9 +34,20 @@ export default function Header() {
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
             {isAuthenticated && (
-              <Nav.Link as={Link} href="/recipes">
-                Recipes
-              </Nav.Link>
+              <>
+                <Nav.Link as={Link} href="/recipes">
+                  Recipes
+                </Nav.Link>
+                <Nav.Link as={Link} href="/authusers">
+                  Auth Users
+                </Nav.Link>
+                <Nav.Link as={Link} href="/bookmarkslist">
+                  Bookmarks
+                </Nav.Link>
+                <Nav.Link as={Link} href="/chatapp">
+                  Chatapp
+                </Nav.Link>
+              </>
             )}
           </Nav>
           <Nav>
@@ -51,10 +62,10 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Nav.Link as={Link} href="/login">
+                <Nav.Link as={Link} href="/auth">
                   Login
                 </Nav.Link>
-                <Nav.Link as={Link} href="/signup">
+                <Nav.Link as={Link} href="/auth">
                   Signup
                 </Nav.Link>
               </>

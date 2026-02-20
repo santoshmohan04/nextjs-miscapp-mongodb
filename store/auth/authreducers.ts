@@ -1,4 +1,3 @@
-import { Document } from "mongoose";
 import {
   LOGIN_FAILURE,
   LOGIN_REQUEST,
@@ -45,6 +44,7 @@ const initialState: AuthState = {
 
 const authReducer = (state = initialState, action: any): AuthState => {
   switch (action.type) {
+    /* --------------------------------- LOGIN --------------------------------- */
     case LOGIN_REQUEST:
       return {
         ...state,
@@ -55,9 +55,9 @@ const authReducer = (state = initialState, action: any): AuthState => {
     case LOGIN_SUCCESS:
       return {
         ...state,
+        loading: false,
         isAuthenticated: true,
         user: action.payload,
-        loading: false,
         error: null,
       };
 
@@ -68,6 +68,7 @@ const authReducer = (state = initialState, action: any): AuthState => {
         error: action.payload,
       };
 
+    /* --------------------------------- LOGOUT -------------------------------- */
     case LOGOUT_REQUEST:
       return {
         ...state,
@@ -78,9 +79,9 @@ const authReducer = (state = initialState, action: any): AuthState => {
     case LOGOUT_SUCCESS:
       return {
         ...state,
+        loading: false,
         isAuthenticated: false,
         user: null,
-        loading: false,
         error: null,
       };
 
@@ -91,29 +92,23 @@ const authReducer = (state = initialState, action: any): AuthState => {
         error: action.payload,
       };
 
+    /* ------------------------------- REGISTER -------------------------------- */
     case REGISTER_REQUEST:
-      return {
-        ...state,
-        loading: true,
-        error: null,
-      };
+      return { ...state, loading: true, error: null };
 
     case REGISTER_SUCCESS:
       return {
         ...state,
+        loading: false,
         isAuthenticated: true,
         user: action.payload,
-        loading: false,
         error: null,
       };
 
     case REGISTER_FAILURE:
-      return {
-        ...state,
-        loading: false,
-        error: action.payload,
-      };
+      return { ...state, loading: false, error: action.payload };
 
+    /* --------------------------- UPLOAD PROFILE PIC --------------------------- */
     case UPLOAD_PROFILEPIC_REQUEST:
       return { ...state, loading: true, error: null };
 
@@ -121,13 +116,16 @@ const authReducer = (state = initialState, action: any): AuthState => {
       return {
         ...state,
         loading: false,
-        user: { ...state.user, profilepic: action.payload.profilepic },
-        successMessage: action.message,
+        user: state.user
+          ? { ...state.user, profilepic: action.payload.profilepic }
+          : null,
+        successMessage: "Profile picture updated",
       };
 
     case UPLOAD_PROFILEPIC_FAILURE:
       return { ...state, loading: false, error: action.payload };
 
+    /* ----------------------------- CHANGE PASSWORD ---------------------------- */
     case CHANGE_PASSWORD_REQUEST:
       return { ...state, loading: true, error: null, successMessage: null };
 
@@ -147,13 +145,11 @@ const authReducer = (state = initialState, action: any): AuthState => {
         successMessage: null,
       };
 
+    /* ------------------------ CLEAR PASSWORD MESSAGES ------------------------ */
     case CLEAR_PASSWORD_MESSAGES:
-      return {
-        ...state,
-        successMessage: null,
-        error: null,
-      };
+      return { ...state, successMessage: null, error: null };
 
+    /* --------------------------------- DEFAULT -------------------------------- */
     default:
       return state;
   }
