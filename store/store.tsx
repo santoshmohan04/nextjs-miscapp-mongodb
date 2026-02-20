@@ -1,6 +1,6 @@
 // store.ts
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./auth/authReducers";
+import authReducer from "./auth/authreducers";
 import recipeReducer from "./recipies/recipiesreducers";
 import authUsersReducer from "./authusers/authusersreducers";
 import bookmarksReducer from "./bookmarks/reducers";

@@ -12,7 +12,7 @@ export default function RecipesPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/auth");
     }
   }, [isAuthenticated, router]);
 

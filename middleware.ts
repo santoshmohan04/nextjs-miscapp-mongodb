@@ -4,10 +4,10 @@ import { verifyToken } from "@/lib/jwt";
 export async function middleware(req: any) {
   const token = req.cookies.get("token")?.value;
 
-  if (!token) return NextResponse.redirect(new URL("/login", req.url));
+  if (!token) return NextResponse.redirect(new URL("/auth", req.url));
 
   const valid = await verifyToken(token);
-  if (!valid) return NextResponse.redirect(new URL("/login", req.url));
+  if (!valid) return NextResponse.redirect(new URL("/auth", req.url));
 
   return NextResponse.next();
 }

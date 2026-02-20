@@ -3,7 +3,7 @@
 import { Provider } from "react-redux";
 import { store } from "./store";
 import { useEffect } from "react";
-import { restoreSession } from "@/store/auth/authActions";
+import { restoreSession } from "@/store/auth/authactions";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {

@@ -6,7 +6,7 @@ import { signupSchema } from "@/utils/validationSchemas";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { registerUser } from "@/store/auth/authActions";
+import { registerUser } from "@/store/auth/authactions";
 import { useRouter } from "next/navigation";
 
 import Button from "react-bootstrap/Button";

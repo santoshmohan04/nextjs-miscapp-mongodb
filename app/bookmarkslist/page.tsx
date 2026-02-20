@@ -11,7 +11,7 @@ export default function BookmarksListPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/auth");
     }
   }, [isAuthenticated, router]);
 

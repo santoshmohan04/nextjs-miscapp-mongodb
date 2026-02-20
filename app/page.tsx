@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { restoreSession } from "@/store/auth/authActions";
+import { restoreSession } from "@/store/auth/authactions";
 
 export default function Home() {
   const router = useRouter();

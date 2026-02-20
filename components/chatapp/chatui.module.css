@@ -85,10 +85,46 @@
   margin-left: auto;
 }
 
+.userMsg .bookmarkLink {
+  color: white;
+}
+
 /* TEXT */
 .msgText {
   font-size: 15px;
   line-height: 1.4;
+}
+
+.bookmarkList {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.bookmarkList li {
+  margin-bottom: 6px;
+}
+
+.bookmarkLink {
+  color: #0d6efd;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.bookmarkLink:hover {
+  text-decoration: underline;
+}
+
+.expandButton {
+  border: none;
+  background: transparent;
+  color: #0d6efd;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+}
+
+.expandButton:hover {
+  text-decoration: underline;
 }
 
 .msgTime {

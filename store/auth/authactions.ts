@@ -15,7 +15,7 @@ import {
   CHANGE_PASSWORD_SUCCESS,
   CHANGE_PASSWORD_FAILURE,
   CLEAR_PASSWORD_MESSAGES,
-} from "./authTypes";
+} from "./authtypes";
 
 import axios from "axios";
 import { Dispatch } from "redux";
@@ -37,7 +37,7 @@ export const loginRequest =
         { withCredentials: true }
       );
 
-      if (data?.message === "Login successful" && data.user) {
+      if (data?.user) {
         const { password: _pw, ...safeUser } = data.user;
 
         localStorage.setItem("loginUser", JSON.stringify(safeUser));
@@ -104,7 +104,7 @@ export const logoutUser = (router: any) => async (dispatch: Dispatch) => {
     localStorage.removeItem("loginUser");
 
     dispatch({ type: LOGOUT_SUCCESS });
-    router.push("/login");
+    router.push("/auth");
   } catch (error: any) {
     dispatch({
       type: LOGOUT_FAILURE,

@@ -12,7 +12,7 @@ import {
   uploadProfilePic,
   changePassword,
   clearPasswordMessages,
-} from "@/store/auth/authActions";
+} from "@/store/auth/authactions";
 import { useToast } from "@/components/ToastMessage";
 
 export default function ProfilePage() {
@@ -47,7 +47,7 @@ export default function ProfilePage() {
   // 🔹 Run validation whenever values change
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/auth");
     }
 
     // 🔹 Validate password rules

@@ -8,7 +8,7 @@ import Navbar from "react-bootstrap/Navbar";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { logoutUser } from "@/store/auth/authActions";
+import { logoutUser } from "@/store/auth/authactions";
 
 export default function Header() {
   const router = useRouter();
@@ -62,10 +62,10 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Nav.Link as={Link} href="/login">
+                <Nav.Link as={Link} href="/auth">
                   Login
                 </Nav.Link>
-                <Nav.Link as={Link} href="/signup">
+                <Nav.Link as={Link} href="/auth">
                   Signup
                 </Nav.Link>
               </>

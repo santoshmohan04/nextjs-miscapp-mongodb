@@ -6,7 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { loginSchema } from "@/utils/validationSchemas";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { loginRequest } from "@/store/auth/authActions";
+import { loginRequest } from "@/store/auth/authactions";
 import { useRouter } from "next/navigation";
 
 import Button from "react-bootstrap/Button";

@@ -15,7 +15,7 @@ import {
   CHANGE_PASSWORD_SUCCESS,
   CHANGE_PASSWORD_FAILURE,
   CLEAR_PASSWORD_MESSAGES,
-} from "./authTypes";
+} from "./authtypes";
 
 export interface IAuthUser {
   _id?: string;

@@ -14,6 +14,9 @@ export default function ChatUI() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [botTyping, setBotTyping] = useState(false);
+  const [expandedBookmarkMessages, setExpandedBookmarkMessages] = useState<
+    Record<number, boolean>
+  >({});
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -65,12 +68,13 @@ export default function ChatUI() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, botTyping]);
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (overrideText?: string) => {
+    const messageText = (overrideText ?? input).trim();
+    if (!messageText) return;
 
     const userMsg = {
       sender: "user",
-      text: input,
+      text: messageText,
       time: new Date().toLocaleTimeString(),
     };
 
@@ -80,13 +84,15 @@ export default function ChatUI() {
 
     setBotTyping(true);
 
-    const reply = await handleBotReply(input);
+    const reply = await handleBotReply(messageText);
 
     setBotTyping(false);
 
     const botMsg = {
       sender: "bot",
       text: reply.message, // ✅ FIXED: always string
+      type: reply.type || "text",
+      bookmarks: reply.bookmarks || [],
       error: reply.error || false,
       retryAction: reply.retryAction || null,
       time: new Date().toLocaleTimeString(),
@@ -111,15 +117,19 @@ export default function ChatUI() {
         }
 
         const data = await res.json();
+        const bookmarks = Array.isArray(data) ? data : data?.data || [];
 
-        if (!data?.data?.length) {
+        if (!bookmarks.length) {
           return { message: "📭 You have no bookmarks yet." };
         }
 
         return {
-          message:
-            "📘 Your bookmarks:\n" +
-            data.data.map((b: any) => `• ${b.title}`).join("\n"),
+          type: "bookmarks",
+          message: "📘 Your bookmarks",
+          bookmarks: bookmarks.map((b: any) => ({
+            title: b.title || "Untitled",
+            link: b.link || "#",
+          })),
         };
       }
 
@@ -173,6 +183,8 @@ export default function ChatUI() {
     const botMsg = {
       sender: "bot",
       text: reply.message,
+      type: reply.type || "text",
+      bookmarks: reply.bookmarks || [],
       error: reply.error || false,
       retryAction: reply.retryAction || null,
       time: new Date().toLocaleTimeString(),
@@ -203,11 +215,66 @@ export default function ChatUI() {
                   <button
                     key={i}
                     className={styles.optionButton}
-                    onClick={() => setInput(opt)}
+                    onClick={() => sendMessage(opt)}
                   >
                     {opt}
                   </button>
                 ))}
+              </div>
+            ) : msg.type === "bookmarks" ? (
+              <div key={index} className={styles.botMsg}>
+                <img src={BOT_IMG} className={styles.avatar} />
+                <div className={styles.msgBubble}>
+                  <div className={styles.msgText}>{msg.text}</div>
+                  {(() => {
+                    const allBookmarks = msg.bookmarks || [];
+                    const isExpanded = expandedBookmarkMessages[index] || false;
+                    const visibleBookmarks = isExpanded
+                      ? allBookmarks
+                      : allBookmarks.slice(0, 5);
+                    const hasMore = allBookmarks.length > 5;
+
+                    return (
+                      <>
+                        <ul className={styles.bookmarkList}>
+                          {visibleBookmarks.map(
+                            (
+                              bookmark: { title: string; link: string },
+                              bookmarkIndex: number
+                            ) => (
+                              <li key={`${bookmark.title}-${bookmarkIndex}`}>
+                                <a
+                                  href={bookmark.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.bookmarkLink}
+                                >
+                                  {bookmark.title}
+                                </a>
+                              </li>
+                            )
+                          )}
+                        </ul>
+
+                        {hasMore && (
+                          <button
+                            type="button"
+                            className={styles.expandButton}
+                            onClick={() =>
+                              setExpandedBookmarkMessages((prev) => ({
+                                ...prev,
+                                [index]: !isExpanded,
+                              }))
+                            }
+                          >
+                            {isExpanded ? "Show less" : "Show more"}
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
+                  <div className={styles.msgTime}>{msg.time}</div>
+                </div>
               </div>
             ) : (
               <div
@@ -265,7 +332,7 @@ export default function ChatUI() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
-          <Button onClick={sendMessage}>Send</Button>
+          <Button onClick={() => sendMessage()}>Send</Button>
         </div>
       </Card>
     </div>
