@@ -5,6 +5,22 @@ import { getSessionUser } from "@/lib/auth";
 import mongoose from "mongoose";
 import { errorResponse, successResponse } from "@/lib/api-response";
 
+function parseTags(input: unknown): string[] {
+  if (Array.isArray(input)) {
+    return Array.from(
+      new Set(input.map((tag) => String(tag).trim()).filter(Boolean))
+    );
+  }
+
+  if (typeof input === "string") {
+    return Array.from(
+      new Set(input.split(",").map((tag) => tag.trim()).filter(Boolean))
+    );
+  }
+
+  return [];
+}
+
 // ------------------------
 // UPDATE RECIPE
 // ------------------------
@@ -39,7 +55,17 @@ export async function PUT(
 
     const body = await req.json();
 
-    const updated = await Recipe.findByIdAndUpdate(id, body, {
+    const payload: Record<string, unknown> = { ...body };
+
+    if (body?.favorite !== undefined) {
+      payload.favorite = Boolean(body.favorite);
+    }
+
+    if (body?.tags !== undefined) {
+      payload.tags = parseTags(body.tags);
+    }
+
+    const updated = await Recipe.findByIdAndUpdate(id, payload, {
       new: true,
       runValidators: true,
     });

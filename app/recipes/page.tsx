@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import RecipeList from "@/components/recipelist";
+import RecipeFilterExample from "@/components/recipe/RecipeFilterExample";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -20,6 +20,6 @@ export default function RecipesPage() {
     return null;
   }
 
-  return <RecipeList />;
+  return <RecipeFilterExample />;
 }
 

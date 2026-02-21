@@ -44,7 +44,7 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
     },
     {
       label: "Notes",
-      href: "/docs",
+      href: "/notes",
       icon: FileText,
       badge: null,
     },
