@@ -198,6 +198,7 @@ import Bookmark from "@/models/Bookmark";
 import { connectDB } from "@/lib/mongodb";
 import { getSessionUser } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 
 export async function PUT(req: Request, { params }: any) {
   try {
@@ -244,6 +245,11 @@ export async function DELETE(req: Request, { params }: any) {
     if (!deleted) {
       return errorResponse("Bookmark not found", 404, "BOOKMARK_NOT_FOUND");
     }
+
+    await logActivity(sessionUser._id, "BOOKMARK_DELETED", "bookmark", deleted._id, {
+      title: deleted.title,
+      link: deleted.link,
+    });
 
     return successResponse({ message: "Deleted" });
   } catch {

@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { getSessionUser } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
 import Note from "@/models/Note";
+import { logActivity } from "@/lib/activity-log";
 
 function parseTags(input: unknown): string[] {
   if (Array.isArray(input)) {
@@ -95,6 +96,11 @@ export async function POST(req: Request) {
       content: String(body?.content ?? ""),
       tags: parseTags(body?.tags),
       pinned: Boolean(body?.pinned),
+    });
+
+    await logActivity(sessionUser._id, "NOTE_CREATED", "note", note._id, {
+      title: note.title,
+      pinned: note.pinned,
     });
 
     return successResponse(note, { statusCode: 201 });

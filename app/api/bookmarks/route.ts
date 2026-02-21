@@ -144,6 +144,7 @@ import { connectDB } from "@/lib/mongodb";
 import { getThumbnail } from "@/utils/get-thumbnail";
 import { getSessionUser } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 
 // 📌 GET: Fetch All Bookmarks
 export async function GET() {
@@ -179,11 +180,22 @@ export async function POST(req: Request) {
 
     const thumbnail = await getThumbnail(body.link);
 
-    const bookmark = await Bookmark.create({
+    const createdBookmark = await Bookmark.create({
       ...body,
       createdBy: sessionUser._id,
       thumbnail,
     });
+
+    const bookmark = Array.isArray(createdBookmark)
+      ? createdBookmark[0]
+      : createdBookmark;
+
+    if (bookmark) {
+      await logActivity(sessionUser._id, "BOOKMARK_CREATED", "bookmark", bookmark._id, {
+        title: bookmark.title,
+        link: bookmark.link,
+      });
+    }
 
     return successResponse(bookmark, { statusCode: 201 });
   } catch {

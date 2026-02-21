@@ -4,6 +4,7 @@ import { Recipe } from "@/models/Recipe";
 import { getSessionUser } from "@/lib/auth";
 import mongoose from "mongoose";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 
 function parseTags(input: unknown): string[] {
   if (Array.isArray(input)) {
@@ -70,6 +71,12 @@ export async function PUT(
       runValidators: true,
     });
 
+    if (updated) {
+      await logActivity(user._id, "RECIPE_UPDATED", "recipe", updated._id, {
+        name: updated.name,
+      });
+    }
+
     return successResponse(updated);
   } catch (err: any) {
     return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
@@ -108,6 +115,12 @@ export async function DELETE(
     }
 
     const deleted = await Recipe.findByIdAndDelete(id);
+
+    if (deleted) {
+      await logActivity(user._id, "RECIPE_DELETED", "recipe", deleted._id, {
+        name: deleted.name,
+      });
+    }
 
     return successResponse({
       message: "Recipe deleted successfully",

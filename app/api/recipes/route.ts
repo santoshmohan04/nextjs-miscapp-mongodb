@@ -3,6 +3,7 @@ import { Recipe } from "@/models/Recipe";
 import mongoose from "mongoose";
 import { getSessionUser } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 
 function parseTags(input: unknown): string[] {
   if (Array.isArray(input)) {
@@ -131,9 +132,13 @@ export async function POST(req: Request) {
     };
 
     // Save recipe with authenticated user ID
-    const recipe = await Recipe.create({
+    const recipe = (await Recipe.create({
       ...payload,
       createdBy: new mongoose.Types.ObjectId(user._id),
+    })) as any;
+
+    await logActivity(user._id, "RECIPE_CREATED", "recipe", recipe._id, {
+      name: recipe.name,
     });
 
     return successResponse(recipe, { statusCode: 201 });
