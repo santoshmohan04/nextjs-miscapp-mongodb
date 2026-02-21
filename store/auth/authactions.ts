@@ -23,6 +23,20 @@ import { Dispatch } from "redux";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/utils/firebaseConfig";
 
+const unwrapApiData = <T = any>(responseData: any): T => {
+  if (responseData && typeof responseData === "object" && "data" in responseData) {
+    return responseData.data as T;
+  }
+
+  return responseData as T;
+};
+
+const getApiErrorMessage = (error: any, fallback: string) =>
+  error?.response?.data?.error?.message ||
+  error?.response?.data?.message ||
+  error?.message ||
+  fallback;
+
 /* -------------------------------------------------------------------------- */
 /*                               LOGIN ACTION                                  */
 /* -------------------------------------------------------------------------- */
@@ -37,8 +51,10 @@ export const loginRequest =
         { withCredentials: true }
       );
 
-      if (data?.user) {
-        const { password: _pw, ...safeUser } = data.user;
+      const payload = unwrapApiData<{ message?: string; user?: any }>(data);
+
+      if (payload?.user) {
+        const { password: _pw, ...safeUser } = payload.user;
 
         localStorage.setItem("loginUser", JSON.stringify(safeUser));
 
@@ -46,13 +62,13 @@ export const loginRequest =
       } else {
         dispatch({
           type: LOGIN_FAILURE,
-          payload: data.message || "Unexpected login response",
+          payload: payload?.message || "Unexpected login response",
         });
       }
     } catch (error: any) {
       dispatch({
         type: LOGIN_FAILURE,
-        payload: error.response?.data?.error || "Login failed",
+        payload: getApiErrorMessage(error, "Login failed"),
       });
     }
   };
@@ -72,8 +88,10 @@ export const registerUser =
         { withCredentials: true }
       );
 
-      if (data?.message === "User created successfully" && data.user) {
-        const { password: _pw, ...safeUser } = data.user;
+      const payload = unwrapApiData<{ message?: string; user?: any }>(data);
+
+      if (payload?.user) {
+        const { password: _pw, ...safeUser } = payload.user;
 
         localStorage.setItem("loginUser", JSON.stringify(safeUser));
 
@@ -81,13 +99,13 @@ export const registerUser =
       } else {
         dispatch({
           type: REGISTER_FAILURE,
-          payload: data.message || "Unexpected registration response",
+          payload: payload?.message || "Unexpected registration response",
         });
       }
     } catch (error: any) {
       dispatch({
         type: REGISTER_FAILURE,
-        payload: error.response?.data?.error || "Registration failed",
+        payload: getApiErrorMessage(error, "Registration failed"),
       });
     }
   };
@@ -108,7 +126,7 @@ export const logoutUser = (router: any) => async (dispatch: Dispatch) => {
   } catch (error: any) {
     dispatch({
       type: LOGOUT_FAILURE,
-      payload: error.response?.data?.message || "Logout failed",
+      payload: getApiErrorMessage(error, "Logout failed"),
     });
   }
 };
@@ -141,7 +159,7 @@ export const uploadProfilePic = (file: File) => async (dispatch: Dispatch) => {
   } catch (error: any) {
     dispatch({
       type: UPLOAD_PROFILEPIC_FAILURE,
-      payload: error.response?.data?.error || "Profile pic update failed",
+      payload: getApiErrorMessage(error, "Profile pic update failed"),
     });
   }
 };
@@ -161,18 +179,21 @@ export const changePassword =
         { withCredentials: true }
       );
 
+      const payload = unwrapApiData<{ message?: string }>(data);
+
       dispatch({
         type: CHANGE_PASSWORD_SUCCESS,
-        payload: data.message,
+        payload: payload?.message,
       });
 
-      return data.message;
+      return payload?.message;
     } catch (error: any) {
+      const message = getApiErrorMessage(error, "Password update failed");
       dispatch({
         type: CHANGE_PASSWORD_FAILURE,
-        payload: error.response?.data?.error || "Password update failed",
+        payload: message,
       });
-      throw new Error(error.response?.data?.error || "Password update failed");
+      throw new Error(message);
     }
   };
 
@@ -190,7 +211,9 @@ export const restoreSession = () => async (dispatch: Dispatch) => {
 
     if (!res.ok) throw new Error("Not logged in");
 
-    const { user } = await res.json();
+    const responseData = await res.json();
+    const payload = unwrapApiData<{ user?: any }>(responseData);
+    const { user } = payload || {};
 
     if (!user) throw new Error("Invalid session");
 

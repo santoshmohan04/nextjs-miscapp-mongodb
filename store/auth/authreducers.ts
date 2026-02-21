@@ -22,6 +22,7 @@ export interface IAuthUser {
   name?: string;
   email?: string;
   profilepic?: string;
+  avatarKey?: string;
   createdAt?: string;
   updatedAt?: string;
 }
