@@ -6,6 +6,24 @@
 
  * components:
  *   schemas:
+ *     ApiError:
+ *       type: object
+ *       required:
+ *         - success
+ *         - error
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         error:
+ *           type: object
+ *           required:
+ *             - message
+ *           properties:
+ *             message:
+ *               type: string
+ *             code:
+ *               type: string
  *     Bookmark:
  *       type: object
  *       properties:
@@ -40,9 +58,32 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Bookmark'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bookmark'
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     count:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  *
  *   post:
  *     summary: Create a new bookmark
@@ -77,36 +118,75 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Bookmark'
- *       400:
- *         description: Invalid input
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Bookmark'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 
-import { NextResponse } from "next/server";
 import Bookmark from "@/models/Bookmark";
 import { connectDB } from "@/lib/mongodb";
 import { getThumbnail } from "@/utils/get-thumbnail";
+import { getSessionUser } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 // 📌 GET: Fetch All Bookmarks
 export async function GET() {
-  await connectDB();
-  const bookmarks = await Bookmark.find().sort({ updatedAt: -1 });
-  return NextResponse.json(bookmarks);
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
+
+    await connectDB();
+    const bookmarks = await Bookmark.find({ createdBy: sessionUser._id }).sort({
+      updatedAt: -1,
+    });
+
+    return successResponse(bookmarks, {
+      count: bookmarks.length,
+    });
+  } catch {
+    return errorResponse("Failed to fetch bookmarks", 500, "BOOKMARKS_FETCH_FAILED");
+  }
 }
 
 // 📌 POST: Create Bookmark
 export async function POST(req: Request) {
-  await connectDB();
-  const body = await req.json();
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
 
-  const thumbnail = await getThumbnail(body.link);
+    await connectDB();
+    const body = await req.json();
 
-  const bookmark = await Bookmark.create({
-    ...body,
-    thumbnail,
-  });
+    const thumbnail = await getThumbnail(body.link);
 
-  return NextResponse.json(bookmark, { status: 201 });
+    const bookmark = await Bookmark.create({
+      ...body,
+      createdBy: sessionUser._id,
+      thumbnail,
+    });
+
+    return successResponse(bookmark, { statusCode: 201 });
+  } catch {
+    return errorResponse("Failed to create bookmark", 500, "BOOKMARK_CREATE_FAILED");
+  }
 }

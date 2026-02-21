@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IBookmark {
+  createdBy: mongoose.Types.ObjectId;
   title: string;
   link: string;
   description?: string;
@@ -17,6 +18,11 @@ export interface IBookmarkDocument extends IBookmark, Document {
 
 const BookmarkSchema = new Schema<IBookmarkDocument>(
   {
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AuthUser",
+      required: true,
+    },
     title: { type: String, required: true },
     link: { type: String, required: true },
     description: { type: String },

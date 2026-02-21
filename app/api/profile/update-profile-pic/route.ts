@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
 import { getSessionUser } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 /**
  * @swagger
@@ -28,14 +28,89 @@ import { getSessionUser } from "@/lib/auth";
  *     responses:
  *       200:
  *         description: Profile picture updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     profilepic:
+ *                       type: string
  *       400:
  *         description: Invalid input.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       404:
  *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       500:
  *         description: Server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  */
 export async function PUT(req: Request) {
   try {
@@ -44,15 +119,16 @@ export async function PUT(req: Request) {
     // Authenticate user (cookie based)
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
     }
 
     const { profilepic } = await req.json();
 
     if (!profilepic || typeof profilepic !== "string") {
-      return NextResponse.json(
-        { error: "A valid profilepic URL is required" },
-        { status: 400 }
+      return errorResponse(
+        "A valid profilepic URL is required",
+        400,
+        "VALIDATION_ERROR"
       );
     }
 
@@ -64,15 +140,15 @@ export async function PUT(req: Request) {
     ).select("-password");
 
     if (!updatedUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return errorResponse("User not found", 404, "USER_NOT_FOUND");
     }
 
-    return NextResponse.json({
+    return successResponse({
       message: "Profile picture updated successfully",
       profilepic: updatedUser.profilepic,
     });
   } catch (err: any) {
     console.error("Update profile pic error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, requireRole } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 /**
  * @swagger
@@ -33,10 +33,78 @@ import bcrypt from "bcryptjs";
  *     responses:
  *       200:
  *         description: Successfully fetched list of users.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
  *       401:
  *         description: Unauthorized access.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       403:
+ *         description: Forbidden. Admin role required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       500:
  *         description: Server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  */
 export async function GET(req: Request) {
   try {
@@ -44,7 +112,10 @@ export async function GET(req: Request) {
 
     const currentUser = await getSessionUser();
     if (!currentUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
+    if (!requireRole(currentUser, "admin")) {
+      return errorResponse("Forbidden", 403, "FORBIDDEN");
     }
 
     const url = new URL(req.url);
@@ -65,12 +136,9 @@ export async function GET(req: Request) {
       .limit(limit)
       .select("-password");
 
-    return NextResponse.json({
-      data: users,
-      meta: { total, page, limit },
-    });
+    return successResponse(users, { total, page, limit });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }
 
@@ -106,14 +174,101 @@ export async function GET(req: Request) {
  *     responses:
  *       201:
  *         description: Successfully created user.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
  *       400:
  *         description: Missing required fields.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       401:
  *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       403:
+ *         description: Forbidden. Admin role required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       409:
  *         description: Email already exists.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       500:
  *         description: Server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  */
 export async function POST(req: Request) {
   try {
@@ -121,25 +276,22 @@ export async function POST(req: Request) {
 
     const currentUser = await getSessionUser();
     if (!currentUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
+    if (!requireRole(currentUser, "admin")) {
+      return errorResponse("Forbidden", 403, "FORBIDDEN");
     }
 
     const { name, email, password, profilepic } = await req.json();
 
     if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return errorResponse("Missing required fields", 400, "VALIDATION_ERROR");
     }
 
     // Check if user exists
     const exists = await AuthUser.findOne({ email });
     if (exists) {
-      return NextResponse.json(
-        { error: "Email already exists" },
-        { status: 409 }
-      );
+      return errorResponse("Email already exists", 409, "EMAIL_EXISTS");
     }
 
     // Hash password
@@ -155,8 +307,8 @@ export async function POST(req: Request) {
     // Remove password before sending
     const { password: _pw, ...userData } = newUser.toObject();
 
-    return NextResponse.json(userData, { status: 201 });
+    return successResponse(userData, { statusCode: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }

@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 export async function GET() {
   await connectDB();
 
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ user: null }, { status: 401 });
+  if (!user) return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
 
-  return NextResponse.json({ user });
+  return successResponse({ user });
 }

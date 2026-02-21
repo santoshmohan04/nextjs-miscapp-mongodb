@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
 import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 /**
  * @swagger
@@ -15,6 +15,90 @@ import { cookies } from "next/headers";
  *       - Profile
  *     security:
  *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized or invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  */
 export async function POST(req: Request) {
   try {
@@ -24,7 +108,7 @@ export async function POST(req: Request) {
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return errorResponse("Not authenticated", 401, "UNAUTHORIZED");
     }
 
     // 🔐 Verify JWT
@@ -34,31 +118,34 @@ export async function POST(req: Request) {
     try {
       payload = await jwtVerify(token, secret);
     } catch (e) {
-      return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+      return errorResponse("Invalid or expired token", 401, "INVALID_TOKEN");
     }
 
     // 📩 Parse request body
     const { currentPassword, newPassword, confirmPassword } = await req.json();
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return NextResponse.json(
-        { error: "All password fields are required" },
-        { status: 400 }
+      return errorResponse(
+        "All password fields are required",
+        400,
+        "VALIDATION_ERROR"
       );
     }
 
     if (newPassword !== confirmPassword) {
-      return NextResponse.json(
-        { error: "New password & confirm password do not match" },
-        { status: 400 }
+      return errorResponse(
+        "New password & confirm password do not match",
+        400,
+        "VALIDATION_ERROR"
       );
     }
 
     // 🚨 Additional security validation
     if (newPassword.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters long" },
-        { status: 400 }
+      return errorResponse(
+        "Password must be at least 8 characters long",
+        400,
+        "WEAK_PASSWORD"
       );
     }
 
@@ -66,15 +153,16 @@ export async function POST(req: Request) {
     const user = await AuthUser.findById(payload.payload.id).select("+password");
 
     if (!user) {
-      return NextResponse.json({ error: "User account not found" }, { status: 404 });
+      return errorResponse("User account not found", 404, "USER_NOT_FOUND");
     }
 
     // ⚠ TS Safety: Make sure password exists
     const storedHash = user.password ?? "";
     if (!storedHash) {
-      return NextResponse.json(
-        { error: "User password record is missing" },
-        { status: 500 }
+      return errorResponse(
+        "User password record is missing",
+        500,
+        "PASSWORD_RECORD_MISSING"
       );
     }
 
@@ -82,9 +170,10 @@ export async function POST(req: Request) {
     const isPasswordValid = await bcrypt.compare(currentPassword, storedHash);
 
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: "Current password is incorrect" },
-        { status: 401 }
+      return errorResponse(
+        "Current password is incorrect",
+        401,
+        "INVALID_CREDENTIALS"
       );
     }
 
@@ -98,11 +187,9 @@ export async function POST(req: Request) {
       { new: true }
     );
 
-    return NextResponse.json({
-      message: "Password updated successfully",
-    });
+    return successResponse({ message: "Password updated successfully" });
   } catch (err: any) {
     console.error("Change-password error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return errorResponse("Internal server error", 500, "INTERNAL_SERVER_ERROR");
   }
 }

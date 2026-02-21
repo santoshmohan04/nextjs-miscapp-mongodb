@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Recipe } from "@/models/Recipe";
 import { getSessionUser } from "@/lib/auth";
 import mongoose from "mongoose";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 // ------------------------
 // UPDATE RECIPE
@@ -16,24 +17,24 @@ export async function PUT(
 
     const user = await getSessionUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
     }
 
     const { id } = await params;
 
     // Validate id
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid recipe ID" }, { status: 400 });
+      return errorResponse("Invalid recipe ID", 400, "INVALID_RECIPE_ID");
     }
 
     const recipe = await Recipe.findById(id);
     if (!recipe) {
-      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+      return errorResponse("Recipe not found", 404, "RECIPE_NOT_FOUND");
     }
 
     // Check recipe ownership
     if (recipe.createdBy.toString() !== user._id.toString()) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return errorResponse("Forbidden", 403, "FORBIDDEN");
     }
 
     const body = await req.json();
@@ -43,9 +44,9 @@ export async function PUT(
       runValidators: true,
     });
 
-    return NextResponse.json(updated, { status: 200 });
+    return successResponse(updated);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }
 
@@ -61,35 +62,32 @@ export async function DELETE(
 
     const user = await getSessionUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
     }
 
     const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid recipe ID" }, { status: 400 });
+      return errorResponse("Invalid recipe ID", 400, "INVALID_RECIPE_ID");
     }
 
     const recipe = await Recipe.findById(id);
     if (!recipe) {
-      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+      return errorResponse("Recipe not found", 404, "RECIPE_NOT_FOUND");
     }
 
     // Check ownership
     if (recipe.createdBy.toString() !== user._id.toString()) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return errorResponse("Forbidden", 403, "FORBIDDEN");
     }
 
     const deleted = await Recipe.findByIdAndDelete(id);
 
-    return NextResponse.json(
-      {
-        message: "Recipe deleted successfully",
-        recipe: deleted,
-      },
-      { status: 200 }
-    );
+    return successResponse({
+      message: "Recipe deleted successfully",
+      recipe: deleted,
+    });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
 import { signToken } from "@/lib/jwt";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 /**
  * Login route
@@ -13,26 +13,17 @@ export async function POST(req: Request) {
     const { email, password } = await req.json();
 
     if (!email || !password)
-      return NextResponse.json(
-        { error: "Email & password required" },
-        { status: 400 }
-      );
+      return errorResponse("Email & password required", 400, "VALIDATION_ERROR");
 
     const user = await AuthUser.findOne({ email }).select("+password");
     if (!user)
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return errorResponse("Invalid credentials", 401, "INVALID_CREDENTIALS");
 
     const stored = user.password ?? "";
     const match = await bcrypt.compare(password, stored);
 
     if (!match)
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return errorResponse("Invalid credentials", 401, "INVALID_CREDENTIALS");
 
     const token = await signToken({ id: user._id.toString() });
 
@@ -45,7 +36,7 @@ export async function POST(req: Request) {
       updatedAt: user.updatedAt,
     };
 
-    const res = NextResponse.json({ message: "Login success", user: safeUser });
+    const res = successResponse({ message: "Login success", user: safeUser });
 
     res.cookies.set("token", token, {
       httpOnly: true,
@@ -57,6 +48,6 @@ export async function POST(req: Request) {
 
     return res;
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }

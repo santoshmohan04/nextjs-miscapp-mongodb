@@ -1,9 +1,257 @@
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import AuthUser from "@/models/User";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, requireRole } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
+import { errorResponse, successResponse } from "@/lib/api-response";
+
+/**
+ * @swagger
+ * /api/authusers/{id}:
+ *   put:
+ *     summary: Update an Auth User by ID
+ *     description: Updates a user account. Requires authentication and admin role.
+ *     tags:
+ *       - AuthUsers
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Auth user ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               profilepic:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       403:
+ *         description: Forbidden. Admin role required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *
+ *   delete:
+ *     summary: Delete an Auth User by ID
+ *     description: Deletes a user account. Requires authentication and admin role.
+ *     tags:
+ *       - AuthUsers
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Auth user ID
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *       400:
+ *         description: Invalid user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       403:
+ *         description: Forbidden. Admin role required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ */
 
 // ------------------------
 // UPDATE USER
@@ -17,13 +265,16 @@ export async function PUT(
 
     const currentUser = await getSessionUser();
     if (!currentUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
+    if (!requireRole(currentUser, "admin")) {
+      return errorResponse("Forbidden", 403, "FORBIDDEN");
     }
 
     const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+      return errorResponse("Invalid user ID", 400, "INVALID_USER_ID");
     }
 
     const body = await req.json();
@@ -44,12 +295,12 @@ export async function PUT(
     }).select("-password");
 
     if (!updatedUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return errorResponse("User not found", 404, "USER_NOT_FOUND");
     }
 
-    return NextResponse.json(updatedUser, { status: 200 });
+    return successResponse(updatedUser);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }
 
@@ -65,26 +316,26 @@ export async function DELETE(
 
     const currentUser = await getSessionUser();
     if (!currentUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
+    if (!requireRole(currentUser, "admin")) {
+      return errorResponse("Forbidden", 403, "FORBIDDEN");
     }
 
     const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+      return errorResponse("Invalid user ID", 400, "INVALID_USER_ID");
     }
 
     const deletedUser = await AuthUser.findByIdAndDelete(id);
 
     if (!deletedUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return errorResponse("User not found", 404, "USER_NOT_FOUND");
     }
 
-    return NextResponse.json(
-      { message: "User deleted successfully" },
-      { status: 200 }
-    );
+    return successResponse({ message: "User deleted successfully" });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }

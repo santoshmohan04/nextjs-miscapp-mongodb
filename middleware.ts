@@ -1,17 +1,46 @@
-import { NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { jwtVerify } from "jose";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function middleware(req: any) {
-  const token = req.cookies.get("token")?.value;
+const TOKEN_COOKIE_NAME = "token";
+const jwtSecret = process.env.JWT_SECRET;
+const jwtSecretKey = jwtSecret ? new TextEncoder().encode(jwtSecret) : null;
 
-  if (!token) return NextResponse.redirect(new URL("/auth", req.url));
+async function isAuthenticated(req: NextRequest) {
+  const token = req.cookies.get(TOKEN_COOKIE_NAME)?.value;
 
-  const valid = await verifyToken(token);
-  if (!valid) return NextResponse.redirect(new URL("/auth", req.url));
+  if (!token || !jwtSecretKey) {
+    return false;
+  }
 
-  return NextResponse.next();
+  try {
+    await jwtVerify(token, jwtSecretKey);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function middleware(req: NextRequest) {
+  const authenticated = await isAuthenticated(req);
+
+  if (authenticated) {
+    return NextResponse.next();
+  }
+
+  const loginUrl = new URL("/auth", req.url);
+  const originalDestination = `${req.nextUrl.pathname}${req.nextUrl.search}`;
+  loginUrl.searchParams.set("redirect", originalDestination);
+
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile/:path*"], // protect routes
+  matcher: [
+    "/recipes/:path*",
+    "/bookmarks/:path*",
+    "/chatapp/:path*",
+    "/profile/:path*",
+    "/authusers/:path*",
+    "/notes/:path*",
+  ],
 };

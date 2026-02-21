@@ -1,15 +1,19 @@
-import { NextResponse } from "next/server";
 import ChatHistory from "@/models/ChatHistory";
 import { connectDB } from "@/lib/mongodb";
 import { getSessionUser } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 export async function GET() {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ messages: [] });
+    const user = await getSessionUser();
+    if (!user) return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
 
-  const data = await ChatHistory.findOne({ userId: user._id });
+    const data = await ChatHistory.findOne({ userId: user._id });
 
-  return NextResponse.json(data || { messages: [] });
+    return successResponse(data || { messages: [] });
+  } catch {
+    return errorResponse("Failed to fetch chat history", 500, "CHAT_HISTORY_FETCH_FAILED");
+  }
 }

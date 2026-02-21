@@ -1,22 +1,27 @@
-import { NextResponse } from "next/server";
 import ChatHistory from "@/models/ChatHistory";
 import { connectDB } from "@/lib/mongodb";
 import { getSessionUser } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 export async function POST(req: Request) {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const user = await getSessionUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const user = await getSessionUser();
+    if (!user) {
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
 
-  const msg = await req.json();
+    const msg = await req.json();
 
-  await ChatHistory.findOneAndUpdate(
-    { userId: user._id },
-    { $push: { messages: msg } },
-    { upsert: true }
-  );
+    await ChatHistory.findOneAndUpdate(
+      { userId: user._id },
+      { $push: { messages: msg } },
+      { upsert: true }
+    );
 
-  return NextResponse.json({ success: true });
+    return successResponse({ message: "Saved" });
+  } catch {
+    return errorResponse("Failed to save chat message", 500, "CHAT_SAVE_FAILED");
+  }
 }

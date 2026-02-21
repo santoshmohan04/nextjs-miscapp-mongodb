@@ -36,13 +36,81 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Bookmark'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Bookmark'
  *       400:
  *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       404:
  *         description: Bookmark not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *
  *   delete:
  *     summary: Delete a bookmark
@@ -64,42 +132,121 @@
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
- *                   example: Deleted
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Deleted
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       404:
  *         description: Bookmark not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  */
 
-import { NextResponse } from "next/server";
 import Bookmark from "@/models/Bookmark";
 import { connectDB } from "@/lib/mongodb";
+import { getSessionUser } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 export async function PUT(req: Request, { params }: any) {
-  await connectDB();
-  const body = await req.json();
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
 
-  const updated = await Bookmark.findByIdAndUpdate(params.id, body, {
-    new: true,
-  });
+    await connectDB();
+    const body = await req.json();
 
-  if (!updated) {
-    return NextResponse.json({ error: "Bookmark not found" }, { status: 404 });
+    const updated = await Bookmark.findOneAndUpdate(
+      { _id: params.id, createdBy: sessionUser._id },
+      body,
+      {
+        new: true,
+      }
+    );
+
+    if (!updated) {
+      return errorResponse("Bookmark not found", 404, "BOOKMARK_NOT_FOUND");
+    }
+
+    return successResponse(updated);
+  } catch {
+    return errorResponse("Failed to update bookmark", 500, "BOOKMARK_UPDATE_FAILED");
   }
-
-  return NextResponse.json(updated);
 }
 
 export async function DELETE(req: Request, { params }: any) {
-  await connectDB();
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
+    }
 
-  const deleted = await Bookmark.findByIdAndDelete(params.id);
+    await connectDB();
 
-  if (!deleted) {
-    return NextResponse.json({ error: "Bookmark not found" }, { status: 404 });
+    const deleted = await Bookmark.findOneAndDelete({
+      _id: params.id,
+      createdBy: sessionUser._id,
+    });
+
+    if (!deleted) {
+      return errorResponse("Bookmark not found", 404, "BOOKMARK_NOT_FOUND");
+    }
+
+    return successResponse({ message: "Deleted" });
+  } catch {
+    return errorResponse("Failed to delete bookmark", 500, "BOOKMARK_DELETE_FAILED");
   }
-
-  return NextResponse.json({ message: "Deleted" });
 }

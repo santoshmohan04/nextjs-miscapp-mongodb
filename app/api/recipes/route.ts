@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Recipe } from "@/models/Recipe";
 import mongoose from "mongoose";
 import { getSessionUser } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 
 /**
  * @swagger
@@ -41,10 +41,50 @@ import { getSessionUser } from "@/lib/auth";
  *     responses:
  *       201:
  *         description: Recipe created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  */
 export async function POST(req: Request) {
   try {
@@ -53,7 +93,7 @@ export async function POST(req: Request) {
     // 🔐 Authenticate user using new getSessionUser()
     const user = await getSessionUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
     }
 
     const body = await req.json();
@@ -64,10 +104,10 @@ export async function POST(req: Request) {
       createdBy: new mongoose.Types.ObjectId(user._id),
     });
 
-    return NextResponse.json(recipe, { status: 201 });
+    return successResponse(recipe, { statusCode: 201 });
   } catch (err: any) {
     console.error("POST /api/recipes error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }
 
@@ -84,10 +124,52 @@ export async function POST(req: Request) {
  *     responses:
  *       200:
  *         description: List of recipes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     code:
+ *                       type: string
  */
 export async function GET() {
   try {
@@ -96,16 +178,16 @@ export async function GET() {
     // 🔐 Authenticate user
     const user = await getSessionUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401, "UNAUTHORIZED");
     }
 
     const recipes = await Recipe.find({
       createdBy: new mongoose.Types.ObjectId(user._id),
     });
 
-    return NextResponse.json(recipes);
+    return successResponse(recipes);
   } catch (err: any) {
     console.error("GET /api/recipes error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return errorResponse(err.message, 500, "INTERNAL_SERVER_ERROR");
   }
 }
