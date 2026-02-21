@@ -1,0 +1,68 @@
+.avatarGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.avatarItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.avatarItem:hover:not(:disabled) {
+  border-color: var(--primary);
+  background-color: var(--bg);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.avatarItem.selected {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.avatarItem:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.avatarPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.checkmark {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  border: 2px solid var(--bg);
+}
+
+@media (max-width: 576px) {
+  .avatarGrid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.75rem;
+  }
+}

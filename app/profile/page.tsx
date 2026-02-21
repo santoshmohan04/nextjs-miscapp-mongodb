@@ -14,6 +14,8 @@ import {
   clearPasswordMessages,
 } from "@/store/auth/authactions";
 import { useToast } from "@/components/ToastMessage";
+import Avatar from "@/components/Avatar";
+import AvatarPickerModal from "@/components/AvatarPickerModal";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -35,6 +37,9 @@ export default function ProfilePage() {
 
   // show password change form
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+  // Avatar picker state
+  const [showAvatarPickerModal, setShowAvatarPickerModal] = useState(false);
 
   // Profile picture upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -92,6 +97,34 @@ export default function ProfilePage() {
   // ✅ Show password change form
   const handleShowPasswordForm = () => {
     setShowPasswordForm(true);
+  };
+
+  // ✅ Handle avatar selection from picker
+  const handleAvatarSelect = async (avatarKey: string) => {
+    try {
+      const response = await fetch("/api/profile/avatar", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ avatarKey }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Failed to update avatar");
+      }
+
+      const data = await response.json();
+      showToast("Avatar updated successfully!", "success");
+      
+      // Refresh the page or update the redux state
+      // Optionally, you can dispatch an action to update the user state
+      window.location.reload();
+    } catch (error: any) {
+      showToast(error.message || "Failed to update avatar", "danger");
+      throw error;
+    }
   };
 
   // ✅ Handle file selection
@@ -166,32 +199,21 @@ export default function ProfilePage() {
 
                     {/* Right: Profile image */}
                     <div className="text-center">
-                      <img
-                        src={user.profilepic || "/default-avatar.png"}
-                        alt="Profile"
-                        style={{
-                          width: "120px",
-                          height: "120px",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: "2px solid #ddd",
-                        }}
+                      <Avatar
+                        avatarKey={user.avatarKey}
+                        profilepic={user.profilepic}
+                        name={user.name}
+                        size="lg"
                       />
-                      <Form.Group controlId="formFile" className="mb-2">
-                        <Form.Control
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          size="sm"
-                        />
-                      </Form.Group>
+                      <p className="mt-2 mb-3 small text-muted">
+                        {user.avatarKey ? "SVG Avatar" : user.profilepic ? "Legacy Profile Pic" : "Initials"}
+                      </p>
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={handleUpload}
-                        disabled={uploading || !selectedFile}
+                        onClick={() => setShowAvatarPickerModal(true)}
                       >
-                        {uploading ? "Uploading..." : "Upload Profile Pic"}
+                        Change Avatar
                       </Button>
                     </div>
                   </div>
@@ -293,6 +315,15 @@ export default function ProfilePage() {
           </Row>
         </>
       )}
+
+      {/* Avatar Picker Modal */}
+      <AvatarPickerModal
+        show={showAvatarPickerModal}
+        onClose={() => setShowAvatarPickerModal(false)}
+        onSelect={handleAvatarSelect}
+        currentAvatarKey={user?.avatarKey}
+        userName={user?.name}
+      />
     </div>
   );
 }

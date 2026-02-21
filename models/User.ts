@@ -6,6 +6,7 @@ export interface IUser {
   email: string;
   password: string;
   profilepic?: string;
+  avatarKey?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -19,6 +20,7 @@ const userSchema = new Schema<IUserDocument>(
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true, select: false },
     profilepic: { type: String },
+    avatarKey: { type: String },
   },
   { timestamps: true }
 );
