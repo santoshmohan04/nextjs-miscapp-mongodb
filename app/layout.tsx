@@ -1,7 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
 
-import Header from "@/components/header";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 import { Providers } from "@/store/providers";
@@ -21,10 +20,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          <Header />
-          <div className="container mt-3">
-            <ToastProvider>{children}</ToastProvider>
-          </div>
+          <ToastProvider>
+            <div style={{ minHeight: "100vh" }}>
+              {children}
+            </div>
+          </ToastProvider>
         </Providers>
       </body>
     </html>

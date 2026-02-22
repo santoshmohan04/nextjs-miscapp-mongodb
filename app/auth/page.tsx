@@ -11,6 +11,7 @@ export default function AuthPage() {
   const [key, setKey] = useState("login");
 
   return (
+    <div className="container">
     <div
       style={{
         maxWidth: "450px",
@@ -34,6 +35,7 @@ export default function AuthPage() {
           </Tab>
         </Tabs>
       </Card>
+    </div>
     </div>
   );
 }

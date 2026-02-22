@@ -205,6 +205,8 @@ export const clearPasswordMessages = () => (dispatch: Dispatch) =>
 /* -------------------------------------------------------------------------- */
 export const restoreSession = () => async (dispatch: Dispatch) => {
   try {
+    dispatch({ type: LOGIN_REQUEST });
+
     const res = await fetch("/api/auth/me", {
       credentials: "include",
     });

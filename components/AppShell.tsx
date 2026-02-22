@@ -25,6 +25,23 @@ export default function AppShell({ children, pageTitle }: AppShellProps) {
         onMenuToggle={handleShowSidebar}
       />
 
+      {/* Mobile Offcanvas Sidebar - Only show on mobile */}
+      <Offcanvas
+        show={showSidebar}
+        onHide={handleCloseSidebar}
+        placement="start"
+        className={`${styles.offcanvasSidebar} d-lg-none`}
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title className={styles.offcanvasTitle}>
+            Menu
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className={styles.offcanvasBody}>
+          <Sidebar onLinkClick={handleCloseSidebar} />
+        </Offcanvas.Body>
+      </Offcanvas>
+
       {/* Main Layout */}
       <Container fluid className={styles.mainContainer}>
         <Row className={styles.contentRow}>
@@ -32,24 +49,6 @@ export default function AppShell({ children, pageTitle }: AppShellProps) {
           <Col lg={2} className={`${styles.sidebarCol} d-none d-lg-block`}>
             <Sidebar onLinkClick={handleCloseSidebar} />
           </Col>
-
-          {/* Mobile Offcanvas Sidebar */}
-          <Offcanvas
-            show={showSidebar}
-            onHide={handleCloseSidebar}
-            responsive="lg"
-            placement="start"
-            className={styles.offcanvasSidebar}
-          >
-            <Offcanvas.Header closeButton>
-              <Offcanvas.Title className={styles.offcanvasTitle}>
-                Menu
-              </Offcanvas.Title>
-            </Offcanvas.Header>
-            <Offcanvas.Body className={styles.offcanvasBody}>
-              <Sidebar onLinkClick={handleCloseSidebar} />
-            </Offcanvas.Body>
-          </Offcanvas>
 
           {/* Main Content Area */}
           <Col lg={10} className={styles.contentCol}>

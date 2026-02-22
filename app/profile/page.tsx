@@ -13,9 +13,11 @@ import {
   changePassword,
   clearPasswordMessages,
 } from "@/store/auth/authactions";
+import { LOGIN_SUCCESS } from "@/store/auth/authtypes";
 import { useToast } from "@/components/ToastMessage";
 import Avatar from "@/components/Avatar";
 import AvatarPickerModal from "@/components/AvatarPickerModal";
+import AppShell from "@/components/AppShell";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -51,7 +53,7 @@ export default function ProfilePage() {
 
   // 🔹 Run validation whenever values change
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/auth");
     }
 
@@ -59,7 +61,7 @@ export default function ProfilePage() {
     setIsCurrentPasswordValid(passwordRegex.test(currentPassword));
     setIsPasswordValid(passwordRegex.test(password));
     setDoPasswordsMatch(password !== "" && password === confirmPassword);
-  }, [isAuthenticated, router, currentPassword, password, confirmPassword]);
+  }, [isAuthenticated, loading, router, currentPassword, password, confirmPassword]);
 
   // ✅ Separate effect for success & error handling
   useEffect(() => {
@@ -115,12 +117,19 @@ export default function ProfilePage() {
         throw new Error(errorData.error?.message || "Failed to update avatar");
       }
 
-      const data = await response.json();
+      const responseJson = await response.json();
+      const resolvedAvatarKey =
+        responseJson?.data?.avatarKey || responseJson?.avatarKey || avatarKey;
+
+      const updatedUser = {
+        ...(user ?? {}),
+        avatarKey: resolvedAvatarKey,
+      };
+
+      dispatch({ type: LOGIN_SUCCESS, payload: updatedUser });
+      localStorage.setItem("loginUser", JSON.stringify(updatedUser));
+
       showToast("Avatar updated successfully!", "success");
-      
-      // Refresh the page or update the redux state
-      // Optionally, you can dispatch an action to update the user state
-      window.location.reload();
     } catch (error: any) {
       showToast(error.message || "Failed to update avatar", "danger");
       throw error;
@@ -148,11 +157,12 @@ export default function ProfilePage() {
     setUploading(false);
   };
 
-  if (!isAuthenticated) {
+  if (loading || !isAuthenticated) {
     return null;
   }
 
   return (
+    <AppShell pageTitle="Profile">
     <div className="container mt-5">
       <h1></h1>
       {user && (
@@ -325,5 +335,6 @@ export default function ProfilePage() {
         userName={user?.name}
       />
     </div>
+    </AppShell>
   );
 }

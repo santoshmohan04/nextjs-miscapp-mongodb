@@ -53,6 +53,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
+    <div className="container">
     <div style={{ maxWidth: "400px", margin: "50px auto" }}>
       <h2 className="mb-4">Forgot Password</h2>
 
@@ -87,6 +88,7 @@ export default function ForgotPasswordPage() {
           )}
         </Button>
       </Form>
+    </div>
     </div>
   );
 }

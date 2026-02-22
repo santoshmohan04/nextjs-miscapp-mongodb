@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { Alert, Badge, Button, Card, Col, Form, Row, Spinner } from "react-bootstrap";
+import AppShell from "@/components/AppShell";
 
 interface NoteItem {
   _id: string;
@@ -34,7 +35,7 @@ interface NotesApiResponse {
 
 export default function NotesListPage() {
   const router = useRouter();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading: authLoading } = useSelector((state: RootState) => state.auth);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,10 +54,10 @@ export default function NotesListPage() {
   const [pinned, setPinned] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push("/auth");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -159,11 +160,12 @@ export default function NotesListPage() {
     fetchNotes();
   };
 
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
   }
 
   return (
+    <AppShell pageTitle="Notes">
     <div className="py-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="mb-0">My Notes</h3>
@@ -332,5 +334,6 @@ export default function NotesListPage() {
         </Button>
       </div>
     </div>
+    </AppShell>
   );
 }

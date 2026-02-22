@@ -4,19 +4,24 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useRouter } from "next/navigation";
 import AuthUsersList from "@/components/authuserslist";
+import AppShell from "@/components/AppShell";
 
 export default function AuthUsersPage() {
   const router = useRouter();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/auth");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (!isAuthenticated) {
+  if (loading || !isAuthenticated) {
     return null;
   }
-  return <AuthUsersList />;
+  return (
+    <AppShell pageTitle="Admin - Users">
+      <AuthUsersList />
+    </AppShell>
+  );
 }

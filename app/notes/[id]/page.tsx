@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import ReactMarkdown from "react-markdown";
 import { Alert, Badge, Button, Card, Col, Form, Row, Spinner } from "react-bootstrap";
+import AppShell from "@/components/AppShell";
 
 interface NoteItem {
   _id: string;
@@ -29,7 +30,7 @@ interface ApiResponse {
 export default function NoteDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading: authLoading } = useSelector((state: RootState) => state.auth);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,10 +46,10 @@ export default function NoteDetailPage() {
   const id = useMemo(() => params?.id ?? "", [params]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push("/auth");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   const fetchNote = async () => {
     if (!id) return;
@@ -154,19 +155,22 @@ export default function NoteDetailPage() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
   }
 
   if (loading) {
     return (
+      <AppShell pageTitle="Loading...">
       <div className="text-center py-5">
         <Spinner animation="border" />
       </div>
+      </AppShell>
     );
   }
 
   return (
+    <AppShell pageTitle="Note Detail">
     <div className="py-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="mb-0">Note Detail</h3>
@@ -275,5 +279,6 @@ export default function NoteDetailPage() {
         </Row>
       </Form>
     </div>
+    </AppShell>
   );
 }

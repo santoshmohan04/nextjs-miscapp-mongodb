@@ -3,6 +3,7 @@
 import React from "react";
 import { Nav, Badge } from "react-bootstrap";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import {
@@ -12,6 +13,7 @@ import {
   FileText,
   Person,
   GearFill,
+  House,
 } from "react-bootstrap-icons";
 import styles from "./sidebar.module.css";
 
@@ -20,10 +22,17 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onLinkClick }: SidebarProps) {
+  const pathname = usePathname();
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user && "role" in user ? (user as any).role === "admin" : false;
 
   const menuItems = [
+    {
+      label: "Home",
+      href: "/home",
+      icon: House,
+      badge: null,
+    },
     {
       label: "Recipes",
       href: "/recipes",
@@ -68,19 +77,16 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
 
   return (
     <div className={styles.sidebarContainer}>
-      <div className={styles.sidebarBrand}>
-        <h5 className={styles.brandText}>Menu</h5>
-      </div>
-
       <Nav className={`${styles.navMenu} flex-column`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
+          const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onLinkClick}
-              className={styles.navItem}
+              className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
             >
               <Icon className={styles.navIcon} />
               <span className={styles.navLabel}>{item.label}</span>

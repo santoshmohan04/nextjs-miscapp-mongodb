@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { logoutUser } from "@/store/auth/authactions";
-import { List, PersonCircle } from "react-bootstrap-icons";
+import { List } from "react-bootstrap-icons";
 import ThemeToggle from "./ThemeToggle";
 import styles from "./header.module.css";
 
@@ -21,6 +21,26 @@ interface HeaderProps {
   pageTitle?: string;
   onMenuToggle?: () => void;
 }
+
+const UserMenuToggle = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ children, onClick, className, ...props }, ref) => (
+  <button
+    ref={ref}
+    type="button"
+    className={[styles.dropdownToggle, className].filter(Boolean).join(" ")}
+    onClick={(event) => {
+      event.preventDefault();
+      onClick?.(event);
+    }}
+    {...props}
+  >
+    {children}
+  </button>
+));
+
+UserMenuToggle.displayName = "UserMenuToggle";
 
 export default function Header({ pageTitle, onMenuToggle }: HeaderProps) {
   const router = useRouter();
@@ -56,15 +76,13 @@ export default function Header({ pageTitle, onMenuToggle }: HeaderProps) {
       collapseOnSelect
       className={styles.header}
       sticky="top"
-      bg="light"
-      data-bs-theme="light"
     >
       <Container fluid className={styles.headerContainer}>
         {/* Mobile Menu Toggle + Brand */}
         <div className={styles.headerStart}>
           {isAuthenticated && (
             <button
-              className={styles.menuToggleBtn}
+              className={`${styles.menuToggleBtn} d-lg-none`}
               onClick={onMenuToggle}
               aria-label="Toggle menu"
             >
@@ -85,18 +103,24 @@ export default function Header({ pageTitle, onMenuToggle }: HeaderProps) {
 
         {/* Auth Section - Right aligned */}
         <Nav className={styles.navEnd}>
-          <div className="d-flex align-items-center gap-2">
+          <div className={styles.actionsGroup}>
             <ThemeToggle />
             {isAuthenticated ? (
             <Dropdown align="end" className={styles.userDropdown}>
               <Dropdown.Toggle
-                variant="link"
+                as={UserMenuToggle}
                 id="user-dropdown"
-                className={styles.dropdownToggle}
-                as={React.Fragment}
+                aria-label="Open user menu"
               >
                 <div className={styles.avatarContainer}>
-                  {user?.profilepic ? (
+                  {user?.avatarKey ? (
+                    <Image
+                      src={`/avatars/${user.avatarKey}.svg`}
+                      alt="User avatar"
+                      className={styles.avatarImage}
+                      roundedCircle
+                    />
+                  ) : user?.profilepic ? (
                     <Image
                       src={user.profilepic}
                       alt="User avatar"

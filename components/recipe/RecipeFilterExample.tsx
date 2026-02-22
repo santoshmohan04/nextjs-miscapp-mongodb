@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Badge, Button, Card, Col, Form, Row, Spinner } from "react-bootstrap";
 
 type Ingredient = {
@@ -47,6 +47,11 @@ export default function RecipeFilterExample() {
   const [q, setQ] = useState("");
   const [tag, setTag] = useState("");
   const [favoriteFilter, setFavoriteFilter] = useState<"all" | "true" | "false">("all");
+  const [appliedFilters, setAppliedFilters] = useState({
+    q: "",
+    tag: "",
+    favoriteFilter: "all" as "all" | "true" | "false",
+  });
 
   const [page, setPage] = useState(1);
   const [limit] = useState(6);
@@ -55,21 +60,29 @@ export default function RecipeFilterExample() {
   const [scaleByRecipe, setScaleByRecipe] = useState<Record<string, number>>({});
   const [checklistMode, setChecklistMode] = useState<Record<string, boolean>>({});
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, Record<string, boolean>>>({});
+  const lastFetchedQueryRef = useRef<string | null>(null);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(limit));
 
-    if (q.trim()) params.set("q", q.trim());
-    if (tag.trim()) params.set("tag", tag.trim());
-    if (favoriteFilter !== "all") params.set("favorite", favoriteFilter);
+    if (appliedFilters.q.trim()) params.set("q", appliedFilters.q.trim());
+    if (appliedFilters.tag.trim()) params.set("tag", appliedFilters.tag.trim());
+    if (appliedFilters.favoriteFilter !== "all") {
+      params.set("favorite", appliedFilters.favoriteFilter);
+    }
 
     return params.toString();
-  }, [page, limit, q, tag, favoriteFilter]);
+  }, [page, limit, appliedFilters]);
 
-  const fetchRecipes = async () => {
+  const fetchRecipes = async (force = false) => {
     try {
+      if (!force && lastFetchedQueryRef.current === queryString) {
+        return;
+      }
+
+      lastFetchedQueryRef.current = queryString;
       setLoading(true);
       setError("");
 
@@ -102,8 +115,12 @@ export default function RecipeFilterExample() {
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setAppliedFilters({
+      q: q.trim(),
+      tag: tag.trim(),
+      favoriteFilter,
+    });
     setPage(1);
-    fetchRecipes();
   };
 
   const toggleIngredientChecked = (recipeId: string, ingredientName: string) => {
@@ -172,6 +189,11 @@ export default function RecipeFilterExample() {
                       setQ("");
                       setTag("");
                       setFavoriteFilter("all");
+                      setAppliedFilters({
+                        q: "",
+                        tag: "",
+                        favoriteFilter: "all",
+                      });
                       setPage(1);
                     }}
                   >

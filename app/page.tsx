@@ -2,29 +2,22 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { restoreSession } from "@/store/auth/authactions";
 
 export default function Home() {
   const router = useRouter();
-  const dispatch = useDispatch<any>();
 
   const { isAuthenticated, loading } = useSelector(
     (state: RootState) => state.auth
   );
-
-  // Restore session on page load
-  useEffect(() => {
-    dispatch(restoreSession());
-  }, [dispatch]);
 
   // Redirect once session state is known
   useEffect(() => {
     if (loading) return; // Wait until restoreSession finishes
 
     if (isAuthenticated) {
-      router.push("/recipes");
+      router.push("/home");
     } else {
       router.push("/auth");
     }

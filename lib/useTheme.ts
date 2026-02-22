@@ -8,6 +8,11 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
+  const applyThemeToDocument = (nextTheme: Theme) => {
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    document.documentElement.setAttribute("data-bs-theme", nextTheme);
+  };
+
   // Initialize theme on mount
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
@@ -17,7 +22,7 @@ export function useTheme() {
 
     const initialTheme = stored || systemTheme;
     setTheme(initialTheme);
-    document.documentElement.setAttribute("data-theme", initialTheme);
+    applyThemeToDocument(initialTheme);
     setMounted(true);
   }, []);
 
@@ -26,7 +31,7 @@ export function useTheme() {
     setTheme((prev) => {
       const newTheme = prev === "light" ? "dark" : "light";
       localStorage.setItem("theme", newTheme);
-      document.documentElement.setAttribute("data-theme", newTheme);
+      applyThemeToDocument(newTheme);
       return newTheme;
     });
   };
@@ -35,7 +40,7 @@ export function useTheme() {
   const setThemeExplicit = (newTheme: Theme) => {
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
+    applyThemeToDocument(newTheme);
   };
 
   return {

@@ -8,6 +8,7 @@ import { RootState } from "@/store/store";
 import { Alert, Badge, Button, Card, Col, Row } from "react-bootstrap";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import AppShell from "@/components/AppShell";
 
 type ActivityItem = {
   _id: string;
@@ -86,7 +87,7 @@ function StatsSkeleton() {
 
 export default function HomeDashboardPage() {
   const router = useRouter();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading: authLoading } = useSelector((state: RootState) => state.auth);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -97,10 +98,10 @@ export default function HomeDashboardPage() {
   const [noteTotal, setNoteTotal] = useState(0);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push("/auth");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -183,11 +184,12 @@ export default function HomeDashboardPage() {
 
   const latest = useMemo(() => (activities.length ? activities[0] : null), [activities]);
 
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
   }
 
   return (
+    <AppShell pageTitle="Home Dashboard">
     <div className="py-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="mb-0">Home Dashboard</h3>
@@ -320,5 +322,6 @@ export default function HomeDashboardPage() {
         </Col>
       </Row>
     </div>
+    </AppShell>
   );
 }

@@ -5,21 +5,26 @@ import RecipeFilterExample from "@/components/recipe/RecipeFilterExample";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import AppShell from "@/components/AppShell";
 
 export default function RecipesPage() {
   const router = useRouter();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/auth");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (!isAuthenticated) {
+  if (loading || !isAuthenticated) {
     return null;
   }
 
-  return <RecipeFilterExample />;
+  return (
+    <AppShell pageTitle="Recipes">
+      <RecipeFilterExample />
+    </AppShell>
+  );
 }
 

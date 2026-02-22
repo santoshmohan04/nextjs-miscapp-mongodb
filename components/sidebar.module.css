@@ -2,12 +2,12 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #ffffff;
+  background-color: var(--bg);
 }
 
 .sidebarBrand {
   padding: 1.5rem 1rem;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
@@ -30,23 +30,30 @@
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   margin: 0.25rem 0.5rem;
-  color: #495057;
+  color: var(--text);
   text-decoration: none;
   border-radius: 0.375rem;
   transition: all 0.2s ease;
   border-left: 3px solid transparent;
 
   &:hover {
-    background-color: #f8f9fa;
-    color: #667eea;
-    border-left-color: #667eea;
+    background-color: var(--surface);
+    color: var(--primary);
+    border-left-color: var(--primary);
   }
 
   &:active {
-    background-color: #e7f0ff;
-    color: #667eea;
-    border-left-color: #667eea;
+    background-color: var(--primary-light-bg);
+    color: var(--primary);
+    border-left-color: var(--primary);
   }
+}
+
+.navItemActive {
+  background-color: var(--primary-light-bg);
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 600;
 }
 
 .navIcon {
@@ -69,8 +76,8 @@
 
 .sidebarFooter {
   padding: 1.5rem 1rem;
-  border-top: 1px solid #dee2e6;
-  background-color: #f8f9fa;
+  border-top: 1px solid var(--border);
+  background-color: var(--surface);
 }
 
 .userInfo {
@@ -80,7 +87,7 @@
 .userName {
   margin: 0 0 0.25rem 0;
   font-weight: 600;
-  color: #212529;
+  color: var(--text);
   font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
@@ -89,7 +96,7 @@
 
 .userEmail {
   display: block;
-  color: #6c757d;
+  color: var(--muted);
   font-size: 0.8rem;
   white-space: nowrap;
   overflow: hidden;
@@ -98,17 +105,11 @@
 
 @media (max-width: 991.98px) {
   .sidebarContainer {
-    background-color: #ffffff;
-  }
-
-  .navItem {
-    margin: 0.25rem 0;
-    border-radius: 0;
-    padding-left: 1.5rem;
+    background-color: var(--bg);
   }
 
   .navItem:hover {
-    background-color: #f8f9fa;
+    background-color: var(--surface);
     border-left-width: 3px;
   }
 }

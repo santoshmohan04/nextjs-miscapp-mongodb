@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Button, Spinner } from "react-bootstrap";
-import Image from "next/image";
 import Avatar from "./Avatar";
 import { AVAILABLE_AVATARS } from "@/lib/avatars";
 import styles from "./avatarpickmodal.module.css";
@@ -27,13 +26,20 @@ export default function AvatarPickerModal({
     currentAvatarKey
   );
 
-  const handleSelect = async (avatarKey: string) => {
+  useEffect(() => {
+    if (show) {
+      setSelectedKey(currentAvatarKey);
+    }
+  }, [show, currentAvatarKey]);
+
+  const handleSave = async () => {
+    if (!selectedKey || loading) return;
+
     if (loading) return;
-    setSelectedKey(avatarKey);
     setLoading(true);
 
     try {
-      await onSelect(avatarKey);
+      await onSelect(selectedKey);
       setLoading(false);
       onClose();
     } catch (err) {
@@ -55,7 +61,8 @@ export default function AvatarPickerModal({
               className={`${styles.avatarItem} ${
                 selectedKey === avatar.key ? styles.selected : ""
               }`}
-              onClick={() => handleSelect(avatar.key)}
+              type="button"
+              onClick={() => setSelectedKey(avatar.key)}
               disabled={loading}
               title={avatar.label}
             >
@@ -86,7 +93,7 @@ export default function AvatarPickerModal({
         </Button>
         <Button
           variant="primary"
-          onClick={() => selectedKey && handleSelect(selectedKey)}
+          onClick={handleSave}
           disabled={loading || !selectedKey}
         >
           {loading ? "Saving..." : "Save Avatar"}

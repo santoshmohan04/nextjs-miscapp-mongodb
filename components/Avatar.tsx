@@ -57,6 +57,7 @@ export default function Avatar({
           width={pixelSize}
           height={pixelSize}
           className={styles.profilePic}
+          unoptimized
         />
       </div>
     );

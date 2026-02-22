@@ -9,6 +9,7 @@
   --border: #dee2e6;
   --primary: #667eea;
   --primary-dark: #764ba2;
+  --primary-light-bg: #e7f0ff;
 
   color-scheme: light;
 }
@@ -24,6 +25,7 @@
   --border: #404040;
   --primary: #8b9eff;
   --primary-dark: #b89fff;
+  --primary-light-bg: #2a2f4d;
 
   color-scheme: dark;
 }
@@ -35,6 +37,17 @@ body {
   background-color: var(--bg);
   color: var(--text);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   TEXT COLOR UTILITIES
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text) !important;
+}
+
+.text-muted {
+  color: var(--muted) !important;
 }
 
 /* ============================================
